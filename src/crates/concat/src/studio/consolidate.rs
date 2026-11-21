@@ -270,8 +270,7 @@ impl Studio {
             keep: false,
         };
         let output = folder.join("compound.mp4");
-        let titles = self.host.titles.clips(session.project(), plan.video.width, plan.video.height);
-        let request = plan.request(session.project(), &root, &output, titles);
+        let request = plan.request(session.project(), &root, &output, &self.host.titles);
         let compositor = self.host.monitor.off_thread();
         self.merge_job = Some(MergeJob {
             cancel: job.cancel_handle(),

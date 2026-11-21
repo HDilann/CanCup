@@ -145,7 +145,6 @@ pub struct CompoundPlan {
     media: Vec<MediaItem>,
     target_track_id: String,
     start: f64,
-    duration: f64,
 }
 
 impl CompoundPlan {
@@ -157,7 +156,6 @@ impl CompoundPlan {
         let selected: std::collections::HashSet<_> = ids.iter().collect();
         let start = clips.iter().map(|c| c.start).fold(f64::INFINITY, f64::min);
         let end = clips.iter().map(|c| c.start + c.duration).fold(0.0, f64::max);
-        let duration = end - start;
 
         let mut track_indices: Vec<usize> = clips
             .iter()
@@ -198,7 +196,6 @@ impl CompoundPlan {
             media,
             target_track_id,
             start,
-            duration,
         })
     }
 
@@ -232,7 +229,7 @@ impl CompoundPlan {
         project: &Project,
         folder: &Path,
         output: &Path,
-        titles: Vec<concat_export::ExportClip>,
+        titles: &crate::titles::Titles,
     ) -> ExportRequest {
         let mut alone = project.clone();
         let timeline = alone.active_mut();
@@ -251,7 +248,11 @@ impl CompoundPlan {
             track.muted = false;
         }
         let mut clips = flatten_timeline_in(&alone, None, Some(folder));
-        clips.extend(titles);
+        let title_clips = titles
+            .clips(&alone, self.video.width, self.video.height)
+            .into_iter()
+            .map(|t| t.clip);
+        clips.extend(title_clips);
         let end = clips
             .iter()
             .map(|clip| clip.start + clip.duration)

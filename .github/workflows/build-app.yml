@@ -55,12 +55,25 @@ on:
         description: The ref to build (main when empty)
         type: string
         default: ""
+      platform:
+        description: Platform to build (all, windows, macos, linux)
+        type: choice
+        options:
+          - all
+          - windows
+          - macos
+          - linux
+        default: all
   workflow_call:
     inputs:
       ref:
         description: The ref to build, when it is not the one this runs on
         type: string
         default: ""
+      platform:
+        description: Platform to build (all, windows, macos, linux)
+        type: string
+        default: all
     secrets:
       APPLE_CERTIFICATE_P12:
         description: Base64 of a Developer ID Application .p12
@@ -121,6 +134,7 @@ env:
 jobs:
   app:
     name: ${{ matrix.platform }}-${{ matrix.arch }}
+    if: ${{ !inputs.platform || inputs.platform == 'all' || inputs.platform == matrix.platform }}
     strategy:
       fail-fast: false
       matrix:
