@@ -24,11 +24,16 @@ pub(super) fn apply(
                     .iter()
                     .map(|timeline| timeline.name.clone()),
             );
-            let tracks = (1..=4)
-                .map(|_| Track {
+            let tracks = (0..4)
+                .map(|i| Track {
                     id: mint.next("t"),
                     visible: true,
                     muted: false,
+                    zone: match i {
+                        0 => Some(TrackZone::Audio),
+                        1 => Some(TrackZone::Main),
+                        _ => Some(TrackZone::Overlay),
+                    },
                     extra: Default::default(),
                 })
                 .collect();

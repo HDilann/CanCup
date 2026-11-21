@@ -22,6 +22,11 @@ pub(super) fn apply(
                 id: id.clone(),
                 visible: true,
                 muted: false,
+                zone: if bottom {
+                    Some(TrackZone::Audio)
+                } else {
+                    Some(TrackZone::Overlay)
+                },
                 extra: Default::default(),
             };
             // The stack is stored bottom first: the last track is the lane

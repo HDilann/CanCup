@@ -77,6 +77,7 @@ pub(super) fn apply(
                                 id: id.clone(),
                                 visible: true,
                                 muted: false,
+                                zone: Some(TrackZone::Audio),
                                 extra: Default::default(),
                             });
                             id

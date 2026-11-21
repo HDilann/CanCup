@@ -857,7 +857,7 @@ pub(super) fn apply(
             compound_clip.duration = duration;
             compound_clip.name = "Compound Clip".to_string();
 
-            let original_children: Vec<Clip> = clips.iter().map(|c| (**c).clone()).collect();
+            let original_children: Vec<Clip> = clips.clone();
             if let Ok(serialized) = serde_json::to_value(&original_children) {
                 compound_clip.extra.insert("compound_children".to_string(), serialized);
             }
@@ -877,8 +877,8 @@ pub(super) fn apply(
                 .clips
                 .iter()
                 .find(|c| c.id == clip_id)
-                .ok_or_else(|| CommandError::NoSuchClip {
-                    clip_id: clip_id.clone(),
+                .ok_or_else(|| CommandError::CannotMerge {
+                    reason: "That compound clip no longer exists.".into(),
                 })?;
 
             let children_val = compound
