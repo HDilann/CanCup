@@ -21,6 +21,7 @@ import {
     ColourField,
     HelpButton,
     InspectorFmt,
+    KeyButton,
     Note,
     Param,
     ParamFormat,
@@ -49,6 +50,7 @@ import {
     SelectedClipData,
     SelectedTransitionData,
 } from "../timeline/model.slint";
+import { KeyEditor, KeyRowData, KeyMarkData } from "../workspace/keyframes-pane.slint";
 
 // The editor's clip inspector: one panel, three tabs. Adjust is direct
 // controls; Effects and Audio are each a PresetStack over their chain. A
@@ -1458,6 +1460,135 @@ export component SpeedPanel inherits VerticalLayout {
     }
 }
 
+export component InlineKeyRow inherits Rectangle {
+    in property <string> label;
+    in property <ClipField> field;
+    in property <KeyRowData> row-data;
+    in property <[string]> ease-options: ["Linear", "Ease In", "Ease Out", "Ease In-Out"];
+    in-out property <int> ease-choice: 0;
+
+    property <ClipKeyData> state: Keyframes.row(root.field);
+
+    height: 48px;
+
+    VerticalLayout {
+        padding-top: 4px;
+        padding-bottom: 4px;
+        spacing: 4px;
+
+        HorizontalLayout {
+            spacing: 6px;
+
+            Text {
+                text: root.label;
+                color: Theme.fg;
+                font-size: Theme.fs-sm;
+                vertical-alignment: center;
+                width: 78px;
+                overflow: elide;
+            }
+
+            KeyButton {
+                glyph: Glyph.chevron-left;
+                enabled: Keyframes.available && root.state.prev;
+                clicked => { Keyframes.step(root.field, -1); }
+            }
+
+            KeyButton {
+                glyph: Glyph.keyframe;
+                filled: root.state.here;
+                enabled: Keyframes.available;
+                tint: root.state.here || root.state.keyed ? Theme.accent : Theme.fg-dim;
+                clicked => { Keyframes.toggle(root.field); }
+            }
+
+            KeyButton {
+                glyph: Glyph.chevron-right;
+                enabled: Keyframes.available && root.state.next;
+                clicked => { Keyframes.step(root.field, 1); }
+            }
+
+            IconButton {
+                glyph: Glyph.close;
+                enabled: Keyframes.available && root.state.keyed;
+                tooltip: I18n.t("common.delete");
+                clicked => { Keyframes.clear(root.field); }
+            }
+
+            lane := Rectangle {
+                horizontal-stretch: 1;
+                height: 18px;
+                background: Theme.well;
+                border-radius: Theme.r-xs;
+                border-width: 1px;
+                border-color: Theme.line;
+                clip: true;
+
+                Rectangle {
+                    x: 6px;
+                    y: (parent.height - 2px) / 2;
+                    width: Math.max(0px, parent.width - 12px);
+                    height: 2px;
+                    background: root.state.keyed ? Theme.line-strong : Theme.line;
+                }
+
+                Rectangle {
+                    x: 6px + Math.max(0, Math.min(1, KeyEditor.at)) * Math.max(1px, parent.width - 12px) - 1px;
+                    y: 0;
+                    width: 2px;
+                    height: parent.height;
+                    background: Theme.playhead;
+                }
+
+                for key in root.row-data.keys: TouchArea {
+                    x: 6px + key.at * Math.max(1px, lane.width - 12px) - 6px;
+                    y: (parent.height - 14px) / 2;
+                    width: 12px;
+                    height: 14px;
+                    mouse-cursor: pointer;
+
+                    Path {
+                        x: 1px;
+                        y: 2px;
+                        width: 10px;
+                        height: 10px;
+                        viewbox-width: 10;
+                        viewbox-height: 10;
+                        commands: "M 5 0.75 L 9.25 5 L 5 9.25 L 0.75 5 Z";
+                        fill: key.here ? Theme.accent : Theme.field;
+                        stroke: Theme.accent;
+                        stroke-width: 1.5px;
+                    }
+
+                    clicked => {
+                        KeyEditor.jump(key.at);
+                    }
+                }
+
+                TouchArea {
+                    clicked => {
+                        if (lane.width > 12px) {
+                            KeyEditor.jump(Math.max(0, Math.min(1, (self.mouse-x - 6px) / (lane.width - 12px))));
+                        }
+                    }
+                }
+            }
+
+            Select {
+                width: 82px;
+                options: root.ease-options;
+                current <=> root.ease-choice;
+            }
+        }
+
+        Rectangle {
+            height: 1px;
+            background: Theme.line;
+            opacity: 0.4;
+        }
+    }
+}
+
 /// Video: how the picture sits in the frame, how solid it is, and whether
 /// its background is keyed out.
 export component VideoPanel inherits VerticalLayout {
@@ -1830,6 +1961,33 @@ export component VideoPanel inherits VerticalLayout {
                 label: I18n.t("clipInspector.flipVertical");
                 checked: root.selected.flip-v;
                 toggled(on) => { root.set(ClipField.flip-v, on ? 1 : 0); root.commit(); }
+            }
+        }
+    }
+
+    if root.selected.kind == ClipKind.video || root.selected.kind == ClipKind.image: Section {
+        inline-kf := SectionHeader {
+            title: I18n.t("common.keyframes");
+            collapsible: true;
+            summary: Keyframes.available ? (KeyEditor.rows.length > 0 ? "\{KeyEditor.rows.length} tracks" : "") : "";
+        }
+
+        if inline-kf.open: SectionBody {
+            for row in KeyEditor.rows: Rectangle {
+                property <bool> is-target: row.field == ClipField.scale
+                    || row.field == ClipField.offset-x
+                    || row.field == ClipField.offset-y
+                    || row.field == ClipField.rotation
+                    || row.field == ClipField.opacity;
+                visible: self.is-target;
+                height: self.is-target ? 48px : 0px;
+                clip: true;
+
+                InlineKeyRow {
+                    label: row.label;
+                    field: row.field;
+                    row-data: row;
+                }
             }
         }
     }

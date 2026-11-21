@@ -1626,6 +1626,15 @@ export component Lanes inherits Rectangle {
     // up to here. A sibling would not see it.
     wheel := TouchArea {
         scroll-event(event) => {
+            // Alt + Mouse Scroll: horizontal navigation in timeline.
+            // Scroll Up (delta_y positive) pans timeline viewport to the RIGHT;
+            // Scroll Down (delta_y negative) pans timeline viewport to the LEFT (stops at 00:00:00).
+            // Consumed so it does not trigger vertical track scroll or zoom, with speed proportional to zoom.
+            if (event.modifiers.alt) {
+                root.scrolled(Math.max(0, root.scroll-left + (event.delta-y / root.px-per-second) * 2.5));
+                return EventResult.accept;
+            }
+
             // Hand tool: any wheel pans time, no modifier needed.
             if (root.pan-mode) {
                 root.scrolled(Math.max(0, root.scroll-left
@@ -1691,6 +1700,14 @@ export component Lanes inherits Rectangle {
                 width: parent.width;
                 height: 1px;
                 background: Theme.line;
+            }
+
+            if track.is-zone-b-bottom: Rectangle {
+                x: 0;
+                y: parent.height - 2px;
+                width: parent.width;
+                height: 2px;
+                background: Theme.accent;
             }
         }
 
@@ -2025,6 +2042,14 @@ export component Lanes inherits Rectangle {
                 width: parent.width;
                 height: 1px;
                 background: Theme.line;
+            }
+
+            if track.is-zone-b-bottom: Rectangle {
+                x: 0;
+                y: parent.height - 2px;
+                width: parent.width;
+                height: 2px;
+                background: Theme.accent;
             }
 
             // The ruler is the scrub strip: pressed and dragged, the playhead

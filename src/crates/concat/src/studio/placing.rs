@@ -115,10 +115,16 @@ impl Studio {
             return None;
         }
         plan.row = row.clamp(0, lanes - 1);
-        if self
-            .row_track(plan.row)
-            .is_none_or(|track| self.locked(&track.id))
-        {
+        let track = self.row_track(plan.row)?;
+        if self.locked(&track.id) {
+            return None;
+        }
+        let zone = self.timeline().track_zone(&track.id);
+        let is_audio = plan.kind == ClipKind::Audio || plan.media.starts_with("sound:") || plan.kind == ClipKind::SoundLayer;
+        if is_audio && zone != concat_project::TrackZone::Audio {
+            return None;
+        }
+        if !is_audio && zone == concat_project::TrackZone::Audio {
             return None;
         }
         plan.start = self

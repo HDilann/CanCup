@@ -268,7 +268,7 @@ impl Shape {
         let soft = 0.15;
         let slide = |dx, dy, moving| Shape::Slide { dx, dy, moving };
         Some(match xfade {
-            "fade" | "dissolve" | "fadegrays" | "fadefast" | "fadeslow" | "distance" | "hblur" => {
+            "mix" | "fade" | "dissolve" | "fadegrays" | "fadefast" | "fadeslow" | "distance" | "hblur" => {
                 Shape::Cross
             }
             "fadeblack" => Shape::ThroughBlack,

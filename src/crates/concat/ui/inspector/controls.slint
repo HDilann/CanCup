@@ -245,7 +245,7 @@ export component Rail inherits Rectangle {
 
 // One target of the cluster. Small, quiet, and greyed rather than hidden
 // when there is nowhere to go.
-component KeyButton inherits Rectangle {
+export component KeyButton inherits Rectangle {
     in property <Glyph> glyph;
     in property <bool> filled;
     in property <bool> enabled: true;

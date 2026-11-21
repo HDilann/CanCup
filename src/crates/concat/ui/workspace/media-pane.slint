@@ -2703,11 +2703,11 @@ export component MediaPane inherits Rectangle {
                         entries: root.catalogue-transitions;
                         glyph: Glyph.transition;
                         // A card drags onto the timeline as a transition
-                        // clip (#621); a click lays one on the selected
-                        // cut, or at the playhead. No audition overlay.
+                        // clip (#621). Single click selects/previews only,
+                        // does NOT apply to timeline without drag-and-drop.
                         payload-kind: "transition";
-                        auditions: false;
-                        applied(id, label) => { root.apply-transition(id); }
+                        auditions: true;
+                        applied(id, label) => { }
                     }
                 }
 

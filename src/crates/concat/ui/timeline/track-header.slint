@@ -6,7 +6,7 @@ import { Theme } from "../theme/theme.slint";
 import { Glyph, Icon } from "../icons.slint";
 import { IconButton } from "../primitives/panel.slint";
 import { ThinScrollbar } from "../primitives/scrollbar.slint";
-import { TrackData, TrackSize } from "model.slint";
+import { TrackData, TrackSize, TrackZone } from "model.slint";
 
 // The lane switches, in a fixed column beside the lanes.
 //
@@ -228,6 +228,14 @@ component Header inherits Rectangle {
         background: Theme.line;
     }
 
+    if root.track.is-zone-b-bottom: Rectangle {
+        x: 0;
+        y: parent.height - 2px;
+        width: parent.width;
+        height: 2px;
+        background: Theme.accent;
+    }
+
     row := TouchArea {
         HorizontalLayout {
             padding-left: 8px;
@@ -306,6 +314,40 @@ component Header inherits Rectangle {
 
             Rectangle { horizontal-stretch: 1; }
 
+            if root.track.zone-label != "": VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    border-radius: Theme.r-xs;
+                    background: root.track.zone == TrackZone.main
+                        ? Theme.accent.with-alpha(0.18)
+                        : root.track.zone == TrackZone.overlay
+                        ? #9f63d633
+                        : #34c46f33;
+                    border-width: 1px;
+                    border-color: root.track.zone == TrackZone.main
+                        ? Theme.accent.with-alpha(0.5)
+                        : root.track.zone == TrackZone.overlay
+                        ? #9f63d666
+                        : #34c46f66;
+                    HorizontalLayout {
+                        padding-left: 5px;
+                        padding-right: 5px;
+                        padding-top: 1px;
+                        padding-bottom: 1px;
+                        Text {
+                            text: root.track.zone-label;
+                            color: root.track.zone == TrackZone.main
+                                ? Theme.accent
+                                : root.track.zone == TrackZone.overlay
+                                ? #c6b0ff
+                                : #6ae7d4;
+                            font-size: Theme.fs-xs;
+                            font-weight: 600;
+                        }
+                    }
+                }
+            }
+
             VerticalLayout {
                 alignment: start;
                 MoreMenu {
@@ -345,6 +387,9 @@ export component TrackHeaders inherits Rectangle {
     // none of them handles bubbles up to it; a sibling would not see it.
     wheel := TouchArea {
         scroll-event(event) => {
+            if (event.modifiers.alt) {
+                return EventResult.accept;
+            }
             if (event.delta-y == 0px) {
                 return EventResult.reject;
             }

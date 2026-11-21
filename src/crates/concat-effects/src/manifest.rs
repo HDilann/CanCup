@@ -377,6 +377,7 @@ pub struct Transition {
 /// export fallback. Validated at load so a typo is a load error, not a
 /// silent hard cut at export.
 pub const XFADE_NAMES: &[&str] = &[
+    "mix",
     "fade",
     "fadeblack",
     "fadewhite",

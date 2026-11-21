@@ -263,6 +263,19 @@ fn is_true(value: &bool) -> bool {
     *value
 }
 
+/// The 3-Zone Timeline Architecture:
+/// - Zone A (Overlay): Visual tracks stacked above Main Video (Overlay Video, Image, Text, Sticker, Adjustment Layer)
+/// - Zone B (Main): The central anchor main video track
+/// - Zone C (Audio): Audio tracks placed below Main Video (Music, SFX, separated audio)
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TrackZone {
+    Overlay,
+    Main,
+    Audio,
+}
+
 /// A lane. Deliberately untyped: any media goes on any track.
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -275,6 +288,9 @@ pub struct Track {
     pub visible: bool,
     /// Audio on this track is silent when true.
     pub muted: bool,
+    /// 3-Zone Timeline classification (Zone A: Overlay, Zone B: Main, Zone C: Audio)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub zone: Option<TrackZone>,
     /// Fields this build does not know, kept so they round-trip.
     #[serde(flatten, default, skip_serializing_if = "Map::is_empty")]
     pub extra: Map<String, Value>,
@@ -286,6 +302,7 @@ impl Default for Track {
             id: String::new(),
             visible: true,
             muted: false,
+            zone: None,
             extra: Map::new(),
         }
     }
@@ -3738,12 +3755,36 @@ impl Project {
                 name: "Timeline 1".to_owned(),
                 video,
                 background: Background::None,
-                tracks: (1..=4)
-                    .map(|number| Track {
-                        id: format!("T{number}"),
-                        ..Track::default()
-                    })
-                    .collect(),
+                tracks: vec![
+                    Track {
+                        id: "T1".to_owned(),
+                        visible: true,
+                        muted: false,
+                        zone: Some(TrackZone::Audio),
+                        extra: Map::new(),
+                    },
+                    Track {
+                        id: "T2".to_owned(),
+                        visible: true,
+                        muted: false,
+                        zone: Some(TrackZone::Main),
+                        extra: Map::new(),
+                    },
+                    Track {
+                        id: "T3".to_owned(),
+                        visible: true,
+                        muted: false,
+                        zone: Some(TrackZone::Overlay),
+                        extra: Map::new(),
+                    },
+                    Track {
+                        id: "T4".to_owned(),
+                        visible: true,
+                        muted: false,
+                        zone: Some(TrackZone::Overlay),
+                        extra: Map::new(),
+                    },
+                ],
                 clips: Vec::new(),
                 linkage: true,
                 extra: Map::new(),
@@ -3912,6 +3953,52 @@ impl Timeline {
         }
         let background = clip.background.as_ref().unwrap_or(&self.background);
         (!background.is_none()).then_some(background)
+    }
+
+    /// Returns the 3-Zone classification for a track.
+    pub fn track_zone(&self, track_id: &str) -> TrackZone {
+        if let Some(track) = self.tracks.iter().find(|t| t.id == track_id) {
+            if let Some(zone) = track.zone {
+                return zone;
+            }
+        }
+        let index = self.tracks.iter().position(|t| t.id == track_id).unwrap_or(0);
+        let count = self.tracks.len();
+        if count <= 1 {
+            TrackZone::Main
+        } else if index == 0 {
+            TrackZone::Audio
+        } else if index == 1 || (count > 2 && index == count / 2) {
+            TrackZone::Main
+        } else if index < count / 2 {
+            TrackZone::Audio
+        } else {
+            TrackZone::Overlay
+        }
+    }
+
+    /// Finds the main video track (Zone B), or falls back to index 1 or 0.
+    pub fn main_track_id(&self) -> String {
+        self.tracks
+            .iter()
+            .find(|t| self.track_zone(&t.id) == TrackZone::Main)
+            .map(|t| t.id.clone())
+            .unwrap_or_else(|| {
+                self.tracks
+                    .get(1)
+                    .or_else(|| self.tracks.first())
+                    .map(|t| t.id.clone())
+                    .unwrap_or_default()
+            })
+    }
+
+    /// Finds the first free track in a specific zone.
+    pub fn first_free_track_in_zone(&self, zone: TrackZone, start: f64, duration: f64) -> Option<String> {
+        self.tracks
+            .iter()
+            .filter(|t| self.track_zone(&t.id) == zone)
+            .find(|t| self.is_free(&t.id, start, duration, &[]))
+            .map(|t| t.id.clone())
     }
 
     /// Where the last clip ends. Zero for an empty timeline.

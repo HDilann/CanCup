@@ -12,7 +12,7 @@
 use std::collections::HashSet;
 
 use crate::commands::ClipMove;
-use crate::model::Timeline;
+use crate::model::{ClipKind, Timeline, TrackZone};
 
 /// How far two clips may run into each other and still count as touching:
 /// float seconds that should meet exactly sometimes miss by a hair.
@@ -99,7 +99,15 @@ impl Timeline {
             .filter_map(|wanted| {
                 let clip = self.clip(&wanted.clip_id)?;
                 let track_id = if self.track(&wanted.track_id).is_some() {
-                    wanted.track_id.clone()
+                    let target_zone = self.track_zone(&wanted.track_id);
+                    let is_audio = clip.kind == ClipKind::Audio;
+                    if (is_audio && target_zone == TrackZone::Audio)
+                        || (!is_audio && target_zone != TrackZone::Audio)
+                    {
+                        wanted.track_id.clone()
+                    } else {
+                        clip.track_id.clone()
+                    }
                 } else {
                     clip.track_id.clone()
                 };

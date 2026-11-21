@@ -52,6 +52,16 @@ export struct TimelineTabData {
 /// the dropdown in its header.
 export enum TrackSize { auto, small, medium, large }
 
+/// The 3-Zone Timeline Architecture:
+/// - Zone A: Overlay Tracks (Overlay Video, Image, Text, Sticker, Adjustment Layer)
+/// - Zone B: Main Video Track as anchor
+/// - Zone C: Audio Tracks (Music, SFX, separated audio)
+export enum TrackZone {
+    overlay,
+    main,
+    audio,
+}
+
 /// One lane. Deliberately untyped: any media goes on any track, which is why
 /// every lane carries both a visibility and a mute switch rather than one or
 /// the other.
@@ -71,6 +81,9 @@ export struct TrackData {
     /// nothing can be dropped onto it. A lane you can see and hear and still
     /// knock sideways by accident is the one every editor locks.
     locked: bool,
+    zone: TrackZone,
+    zone-label: string,
+    is-zone-b-bottom: bool,
 }
 
 /// A media item's filmstrip and the window of it one clip shows.

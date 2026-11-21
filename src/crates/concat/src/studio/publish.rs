@@ -226,6 +226,7 @@ impl Studio {
 
         let timeline = self.timeline();
         let mut top = 0.0;
+        let main_id = timeline.main_track_id();
         sync(
             &models.tracks,
             timeline
@@ -234,6 +235,13 @@ impl Studio {
                 .rev()
                 .map(|lane| {
                     let height = self.lane_height(lane);
+                    let project_zone = timeline.track_zone(&lane.id);
+                    let (ui_zone, label) = match project_zone {
+                        concat_project::TrackZone::Overlay => (TrackZone::Overlay, "OVERLAY"),
+                        concat_project::TrackZone::Main => (TrackZone::Main, "MAIN VIDEO"),
+                        concat_project::TrackZone::Audio => (TrackZone::Audio, "AUDIO"),
+                    };
+                    let is_zone_b_bottom = lane.id == main_id;
                     let row = TrackData {
                         id: lane.id.as_str().into(),
                         visible: lane.visible,
@@ -242,6 +250,9 @@ impl Studio {
                         size: self.lane_size(&lane.id),
                         height,
                         top,
+                        zone: ui_zone,
+                        zone_label: label.into(),
+                        is_zone_b_bottom,
                     };
                     top += height;
                     row

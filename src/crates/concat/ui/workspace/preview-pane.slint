@@ -10,7 +10,7 @@ import { Tip } from "../primitives/tooltip.slint";
 import { NumberField } from "../primitives/number-field.slint";
 import { Select } from "../primitives/select.slint";
 import { Pane, PaneHeader } from "pane.slint";
-import { PaneKind, PaneSwitcher } from "pane-switcher.slint";
+import { PaneKind, PaneSwitcher, PreviewSettings } from "pane-switcher.slint";
 import { ClipKind, StageGuideData, StageItemData } from "../timeline/model.slint";
 import { ContextMenu, MenuMetrics, MenuRow } from "../primitives/context-menu.slint";
 
@@ -683,6 +683,81 @@ component StageOverlay inherits Rectangle {
         width: root.width;
         height: root.height;
         guide: guide;
+    }
+
+    if PreviewSettings.guidelines: Rectangle {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+
+        // Center vertical alignment guideline
+        Rectangle {
+            x: root.width * 0.5 - 0.5px;
+            y: 0;
+            width: 1px;
+            height: parent.height;
+            background: Theme.accent;
+            opacity: 0.45;
+        }
+
+        // Center horizontal alignment guideline
+        Rectangle {
+            x: 0;
+            y: root.height * 0.5 - 0.5px;
+            width: parent.width;
+            height: 1px;
+            background: Theme.accent;
+            opacity: 0.45;
+        }
+
+        // Custom vertical guideline
+        Rectangle {
+            x: root.width * PreviewSettings.custom-v - 0.5px;
+            y: 0;
+            width: 1px;
+            height: parent.height;
+            background: #5fb8ff;
+            opacity: 0.75;
+        }
+
+        if !PreviewSettings.lock-guidelines: TouchArea {
+            x: root.width * PreviewSettings.custom-v - 8px;
+            y: 0;
+            width: 16px;
+            height: parent.height;
+            mouse-cursor: col-resize;
+
+            moved => {
+                if (self.pressed && root.width > 0) {
+                    PreviewSettings.custom-v = Math.max(0.02, Math.min(0.98, (self.mouse-x + self.x) / root.width));
+                }
+            }
+        }
+
+        // Custom horizontal guideline
+        Rectangle {
+            x: 0;
+            y: root.height * PreviewSettings.custom-h - 0.5px;
+            width: parent.width;
+            height: 1px;
+            background: #5fb8ff;
+            opacity: 0.75;
+        }
+
+        if !PreviewSettings.lock-guidelines: TouchArea {
+            x: 0;
+            y: root.height * PreviewSettings.custom-h - 8px;
+            width: parent.width;
+            height: 16px;
+            mouse-cursor: row-resize;
+
+            moved => {
+                if (self.pressed && root.height > 0) {
+                    PreviewSettings.custom-h = Math.max(0.02, Math.min(0.98, (self.mouse-y + self.y) / root.height));
+                }
+            }
+        }
     }
 
     // The stroke being painted, over everything else: the line the pointer

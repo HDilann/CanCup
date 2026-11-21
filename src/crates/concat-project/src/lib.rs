@@ -42,7 +42,7 @@ pub use commands::{
 };
 pub use doc::{DOCUMENT_VERSION, DocumentSettings, document_version, from_document, to_document};
 pub use editor::{Editor, RetiredFields};
-pub use model::Project;
+pub use model::{Project, TrackZone};
 pub use unread::UnreadSummary;
 
 #[cfg(test)]

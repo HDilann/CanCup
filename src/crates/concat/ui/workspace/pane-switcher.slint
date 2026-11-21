@@ -27,6 +27,13 @@ import { PaneScroll } from "pane.slint";
 // The corollary is that a view can also be absent — set all four seats to the
 // library and there is no timeline on screen. That is the user's business, and
 // the state it was showing is untouched: it is in the global, not in the pane
+export global PreviewSettings {
+    in-out property <bool> guidelines: true;
+    in-out property <bool> lock-guidelines: false;
+    in-out property <float> custom-v: 0.5;
+    in-out property <float> custom-h: 0.5;
+}
+
 // that was drawing it.
 export enum PaneKind {
     /// the bin and the catalogues
@@ -219,6 +226,66 @@ component RemoveRow inherits Rectangle {
     }
 }
 
+component GuideToggleRow inherits Rectangle {
+    in property <string> label;
+    in property <bool> active;
+    in property <bool> enabled: true;
+    callback toggled();
+
+    height: 26px;
+    opacity: root.enabled ? 1.0 : 0.4;
+
+    Rectangle {
+        x: 4px;
+        y: 0;
+        width: parent.width - 8px;
+        height: parent.height;
+        border-radius: Theme.r-sm;
+        background: touch.has-hover && root.enabled ? Theme.field-hover : Colors.transparent;
+
+        HorizontalLayout {
+            padding-left: 8px;
+            padding-right: 8px;
+            spacing: 8px;
+
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 14px;
+                    height: 14px;
+                    border-radius: Theme.r-xs;
+                    border-width: 1px;
+                    border-color: root.active ? Theme.accent : Theme.line-strong;
+                    background: root.active ? Theme.accent : Theme.field;
+
+                    if root.active: Icon {
+                        glyph: Glyph.check;
+                        tint: Theme.on-accent;
+                        size: 10px;
+                        x: 2px;
+                        y: 2px;
+                    }
+                }
+            }
+
+            Text {
+                horizontal-stretch: 1;
+                text: root.label;
+                color: root.enabled ? Theme.fg : Theme.fg-dim;
+                font-size: Theme.fs;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+        }
+
+        touch := TouchArea {
+            enabled: root.enabled;
+            mouse-cursor: pointer;
+            clicked => { root.toggled(); }
+        }
+    }
+}
+
 // The button in a pane's top-right corner: the mark of what this pane is
 // currently showing, and the two ways to change it.
 //
@@ -254,7 +321,9 @@ export component PaneSwitcher inherits Rectangle {
     /// somewhere to be laid out. When the Keyframes row arrived this still
     /// said four, and the row that removes the panel was the one under the
     /// clip.
-    property <length> list-h: 5 * 26px + 9px + 26px + 8px;
+    property <length> list-h: root.kind == PaneKind.preview
+        ? (7 * 26px + 2 * 9px + 26px + 8px)
+        : (5 * 26px + 9px + 26px + 8px);
     /// The whole list when the window has room for it under the button, and
     /// the room otherwise, with the rest reached by scrolling. Never under
     /// three rows: shorter than that is not a list worth scrolling, and
@@ -398,6 +467,21 @@ export component PaneSwitcher inherits Rectangle {
                         kind: PaneKind.timeline;
                         current: root.kind == PaneKind.timeline;
                         chosen => { menu.close(); root.picked(PaneKind.timeline); }
+                    }
+
+                    if root.kind == PaneKind.preview: SwitchDivider { }
+
+                    if root.kind == PaneKind.preview: GuideToggleRow {
+                        label: "Guidelines";
+                        active: PreviewSettings.guidelines;
+                        toggled => { PreviewSettings.guidelines = !PreviewSettings.guidelines; }
+                    }
+
+                    if root.kind == PaneKind.preview: GuideToggleRow {
+                        label: "Lock Guidelines";
+                        active: PreviewSettings.lock-guidelines;
+                        enabled: PreviewSettings.guidelines;
+                        toggled => { PreviewSettings.lock-guidelines = !PreviewSettings.lock-guidelines; }
                     }
 
                     SwitchDivider { }

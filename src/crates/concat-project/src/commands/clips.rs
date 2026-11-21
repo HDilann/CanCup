@@ -54,8 +54,24 @@ pub(super) fn apply(
                 .clone();
             let duration = clip_length(&media);
             let timeline = project.active_mut();
-            let track_id = first_free_track(timeline, start, duration)
-                .unwrap_or_else(|| fresh_track(timeline, mint));
+            let track_id = if media.kind == MediaKind::Audio {
+                timeline
+                    .first_free_track_in_zone(TrackZone::Audio, start, duration)
+                    .unwrap_or_else(|| fresh_audio_track(timeline, mint))
+            } else if media.kind == MediaKind::Video {
+                let main_id = timeline.main_track_id();
+                if timeline.is_free(&main_id, start, duration, &[]) {
+                    main_id
+                } else {
+                    timeline
+                        .first_free_track_in_zone(TrackZone::Overlay, start, duration)
+                        .unwrap_or_else(|| fresh_overlay_track(timeline, mint))
+                }
+            } else {
+                timeline
+                    .first_free_track_in_zone(TrackZone::Overlay, start, duration)
+                    .unwrap_or_else(|| fresh_overlay_track(timeline, mint))
+            };
             let id = mint.next("c");
             timeline
                 .clips
@@ -136,12 +152,10 @@ pub(super) fn apply(
             let track_id = match track_id {
                 Some(id) if timeline.track(&id).is_some() => id,
                 Some(_) => return Err(CommandError::TrackGone),
-                // Every lane above the video is taken: a new one at the top
-                // for the words to land on.
-                None if above => first_free_track_above(timeline, start, duration)
-                    .unwrap_or_else(|| fresh_track(timeline, mint)),
-                None => first_free_track(timeline, start, duration)
-                    .unwrap_or_else(|| fresh_track(timeline, mint)),
+                // Titles and captions land in Zone A (Overlay)
+                None => timeline
+                    .first_free_track_in_zone(TrackZone::Overlay, start, duration)
+                    .unwrap_or_else(|| fresh_overlay_track(timeline, mint)),
             };
             let start = timeline.nearest_free_start(&track_id, start, duration, &[]);
             let id = mint.next("c");
@@ -1086,11 +1100,28 @@ fn first_free_track(timeline: &Timeline, start: f64, duration: f64) -> Option<St
 
 /// A new, empty lane at the top, for a clip with nowhere else to go.
 fn fresh_track(timeline: &mut Timeline, mint: &mut IdMint) -> String {
+    fresh_overlay_track(timeline, mint)
+}
+
+fn fresh_audio_track(timeline: &mut Timeline, mint: &mut IdMint) -> String {
+    let id = mint.next("t");
+    timeline.tracks.insert(0, Track {
+        id: id.clone(),
+        visible: true,
+        muted: false,
+        zone: Some(TrackZone::Audio),
+        extra: Default::default(),
+    });
+    id
+}
+
+fn fresh_overlay_track(timeline: &mut Timeline, mint: &mut IdMint) -> String {
     let id = mint.next("t");
     timeline.tracks.push(Track {
         id: id.clone(),
         visible: true,
         muted: false,
+        zone: Some(TrackZone::Overlay),
         extra: Default::default(),
     });
     id
