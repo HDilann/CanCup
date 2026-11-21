@@ -793,6 +793,65 @@ pub(super) fn apply(
             })
         }
 
+        Command::CreateCompound { clip_ids, item } => {
+            let clips = compound_clips(project.active(), &clip_ids)?;
+            let start = clips.iter().map(|c| c.start).fold(f64::INFINITY, f64::min);
+            let end = clips.iter().map(|c| c.start + c.duration).fold(0.0, f64::max);
+            let duration = end - start;
+            if item.kind != MediaKind::Video
+                || item.path.is_empty()
+                || item.duration.is_none_or(|length| length + 1e-6 < duration)
+            {
+                return Err(CommandError::CannotMerge {
+                    reason: "The compound video does not cover the selected clips.".into(),
+                });
+            }
+            let timeline = project.active();
+            let selected: HashSet<_> = clip_ids.iter().collect();
+            let mut track_indices: Vec<usize> = clips
+                .iter()
+                .filter_map(|c| timeline.tracks.iter().position(|t| t.id == c.track_id))
+                .collect();
+            track_indices.sort_unstable();
+            track_indices.dedup();
+            let target_track_index = track_indices
+                .into_iter()
+                .find(|&idx| {
+                    let track_id = &timeline.tracks[idx].id;
+                    !timeline.clips.iter().any(|c| {
+                        !selected.contains(&c.id)
+                            && c.track_id == *track_id
+                            && c.start < end - 1e-6
+                            && c.start + c.duration > start + 1e-6
+                    })
+                })
+                .ok_or_else(|| CommandError::CannotMerge {
+                    reason: "Unselected clips on the track overlap with the compound range.".into(),
+                })?;
+            let target_track_id = timeline.tracks[target_track_index].id.clone();
+
+            let path = item.path.clone();
+            super::media::apply(project, mint, Command::AddMedia { item })?;
+            let media = project
+                .media
+                .iter()
+                .find(|media| super::media::same_path(&media.path, &path))
+                .expect("imported above");
+            let first_id = clips[0].id.clone();
+            let mut compound_clip =
+                default_clip(first_id.clone(), target_track_id, media, start);
+            compound_clip.duration = duration;
+            compound_clip.name = "Compound Clip".to_string();
+
+            let timeline = project.active_mut();
+            timeline.clips.retain(|clip| !selected.contains(&clip.id));
+            timeline.clips.push(Arc::new(compound_clip));
+            Ok(Outcome {
+                created_id: Some(first_id),
+                applied: true,
+            })
+        }
+
         Command::RemoveClips { clip_ids, ripple } => {
             let timeline = project.active_mut();
             let doomed: HashSet<&str> = clip_ids.iter().map(String::as_str).collect();
@@ -1282,5 +1341,59 @@ pub fn consolidation_clips(
     {
         return Err(refuse("Include both sides of a transition in the merge."));
     }
+    Ok(clips)
+}
+
+/// What a compound clip needs: two or more distinct clips with valid tracks,
+/// and at least one track among them free of overlapping unselected clips.
+pub fn compound_clips(
+    timeline: &Timeline,
+    clip_ids: &[String],
+) -> Result<Vec<Clip>, CommandError> {
+    let refuse = |reason: &str| CommandError::CannotMerge {
+        reason: reason.into(),
+    };
+    let selected: HashSet<_> = clip_ids.iter().collect();
+    if selected.len() < 2 || selected.len() != clip_ids.len() {
+        return Err(refuse("Select two or more distinct clips to create a compound clip."));
+    }
+    let mut clips: Vec<Clip> = clip_ids
+        .iter()
+        .map(|id| {
+            timeline
+                .clip(id)
+                .cloned()
+                .ok_or_else(|| refuse("A selected clip no longer exists."))
+        })
+        .collect::<Result<_, _>>()?;
+    for clip in &clips {
+        if timeline.track(&clip.track_id).is_none() {
+            return Err(CommandError::TrackGone);
+        }
+    }
+    let start = clips.iter().map(|c| c.start).fold(f64::INFINITY, f64::min);
+    let end = clips.iter().map(|c| c.start + c.duration).fold(0.0, f64::max);
+    if end <= start + 1e-6 {
+        return Err(refuse("Selected clips have invalid duration."));
+    }
+    let mut track_indices: Vec<usize> = clips
+        .iter()
+        .filter_map(|c| timeline.tracks.iter().position(|t| t.id == c.track_id))
+        .collect();
+    track_indices.sort_unstable();
+    track_indices.dedup();
+    let has_valid_track = track_indices.iter().any(|&idx| {
+        let track_id = &timeline.tracks[idx].id;
+        !timeline.clips.iter().any(|c| {
+            !selected.contains(&c.id)
+                && c.track_id == *track_id
+                && c.start < end - 1e-6
+                && c.start + c.duration > start + 1e-6
+        })
+    });
+    if !has_valid_track {
+        return Err(refuse("Unselected clips on the track overlap with the compound range."));
+    }
+    clips.sort_by(|a, b| a.start.total_cmp(&b.start));
     Ok(clips)
 }

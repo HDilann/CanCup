@@ -38,6 +38,7 @@ impl Studio {
             "delete-left" => self.delete_to_playhead(PlayheadSide::Left),
             "delete-right" => self.delete_to_playhead(PlayheadSide::Right),
             "select-all" => self.select_all(),
+            "create-compound" | "compound" => self.create_compound(),
             // The phone's way out of the clip tools: nothing selected, the
             // way a press on an empty lane leaves it.
             "deselect" => {
@@ -184,6 +185,7 @@ impl Studio {
                 self.delete_clips_to_playhead(&ids, side);
             }
             "merge" => self.merge(),
+            "create-compound" | "compound" => self.create_compound(),
             // On the clip that was right-clicked, which becomes the
             // selection, as Enhance's row makes it.
             "fit" | "fill" => {

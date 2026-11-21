@@ -756,3 +756,45 @@ fn a_merged_project_saves_and_opens_unchanged() {
         .expect("the merged clip's file is in the bin");
     assert_eq!(media.origin, Some(MediaOrigin::Processed));
 }
+
+#[test]
+fn compound_clip_merges_overlay_image_with_main_video() {
+    let mut desk = Desk::new();
+    let video = desk.place(0, 0.0);
+    let image_media = desk.import("/footage/overlay.png", None, MediaKind::Image);
+    let image = desk.place_of(&image_media, 1, 2.0);
+
+    let before = desk.editor.project().clone();
+    let compound = Command::CreateCompound {
+        clip_ids: vec![video.clone(), image.clone()],
+        item: rendered(10.0),
+    };
+    let outcome = desk.editor.apply(compound).expect("creates compound");
+    assert_eq!(outcome.created_id.as_deref(), Some(video.as_str()));
+
+    let timeline = desk.editor.project().active();
+    assert_eq!(timeline.clips.len(), 1);
+    let created = timeline.clip(&video).expect("compound clip exists");
+    assert_eq!(created.start, 0.0);
+    assert_eq!(created.duration, 10.0);
+    assert_eq!(created.track_id, desk.lane(0));
+    assert_eq!(created.kind, ClipKind::Video);
+    assert_eq!(created.name, "Compound Clip");
+
+    // Undo restores both clips to original tracks
+    assert!(desk.editor.undo());
+    assert_eq!(desk.editor.project(), &before);
+    let timeline_restored = desk.editor.project().active();
+    assert_eq!(timeline_restored.clips.len(), 2);
+    assert_eq!(timeline_restored.clip(&video).unwrap().track_id, desk.lane(0));
+    assert_eq!(timeline_restored.clip(&image).unwrap().track_id, desk.lane(1));
+
+    // Redo re-creates compound
+    assert!(desk.editor.redo());
+    assert_eq!(desk.editor.project().active().clips.len(), 1);
+
+    // Save and load
+    let document = desk.editor.to_document(&document_settings());
+    let reopened = Editor::from_document(&document).expect("reads");
+    assert_eq!(reopened.project(), desk.editor.project());
+}

@@ -2290,6 +2290,13 @@ impl Studio {
                 self.merge_blocked().is_none(),
             ),
             action(
+                "create-compound",
+                self.compound_label(),
+                Glyph::Merge,
+                &keymap::label(&self.prefs, "create-compound"),
+                self.compound_blocked().is_none(),
+            ),
+            action(
                 "freeze",
                 t("studio.freezeFrame"),
                 Glyph::Frame,

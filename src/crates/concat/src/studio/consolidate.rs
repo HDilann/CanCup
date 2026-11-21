@@ -29,6 +29,7 @@ impl Drop for RenderedFile {
     fn drop(&mut self) {
         if !self.keep {
             let _ = std::fs::remove_file(self.folder.join("merged.mp4"));
+            let _ = std::fs::remove_file(self.folder.join("compound.mp4"));
             let _ = std::fs::remove_dir(&self.folder);
         }
     }
@@ -189,6 +190,155 @@ impl Studio {
                         studio.notify(&t("studio.mergeFinished"), false);
                     }
                     Err(error) => studio.notify(&tf("studio.mergeFailed", &[&error]), true),
+                }
+            },
+        );
+    }
+
+    pub fn compound_blocked(&self) -> Option<String> {
+        if self.merge_job.is_some() {
+            return None; // The same action cancels a running job.
+        }
+        if self.host.exporter.is_busy() {
+            return Some(t("studio.mergeExportBusy"));
+        }
+        if self.selection.len() < 2 {
+            return Some(t("studio.compoundSelectClips"));
+        }
+        if self.selection.iter().any(|id| {
+            self.clip(id)
+                .is_some_and(|clip| self.locked(&clip.track_id))
+        }) {
+            return Some(t("studio.mergeTrackLocked"));
+        }
+        concat_project::compound_clips(self.timeline(), &self.selection)
+            .err()
+            .map(|error| error.to_string())
+    }
+
+    pub(super) fn compound_label(&self) -> String {
+        match &self.merge_job {
+            Some(job) => tf(
+                "studio.compoundCancelProgress",
+                &[&format!("{:.0}", job.progress * 100.0)],
+            ),
+            None => t("studio.createCompound"),
+        }
+    }
+
+    pub fn create_compound(&mut self) {
+        if let Some(job) = &self.merge_job {
+            job.cancel.store(true, Ordering::Relaxed);
+            return;
+        }
+        self.flush_commit();
+        if let Some(reason) = self.compound_blocked() {
+            self.notify(&reason, true);
+            return;
+        }
+        let Some(session) = self.session.as_ref() else {
+            return;
+        };
+        let plan = match concat_host::consolidate::CompoundPlan::new(session.project(), &self.selection) {
+            Ok(plan) => plan,
+            Err(error) => {
+                self.notify(&error, true);
+                return;
+            }
+        };
+        let job = match self.host.exporter.begin() {
+            Ok(job) => job,
+            Err(error) => {
+                self.notify(&error, true);
+                return;
+            }
+        };
+        let root = PathBuf::from(session.path());
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        let folder = root.join("media").join(format!("compound-{stamp}"));
+        if let Err(error) =
+            std::fs::create_dir_all(root.join("media")).and_then(|()| std::fs::create_dir(&folder))
+        {
+            self.notify(&tf("studio.compoundFailed", &[&error.to_string()]), true);
+            return;
+        }
+        let rendered = RenderedFile {
+            folder: folder.clone(),
+            keep: false,
+        };
+        let output = folder.join("compound.mp4");
+        let titles = self.host.titles.clips(session.project(), plan.video.width, plan.video.height);
+        let request = plan.request(session.project(), &root, &output, titles);
+        let compositor = self.host.monitor.off_thread();
+        self.merge_job = Some(MergeJob {
+            cancel: job.cancel_handle(),
+            progress: 0.0,
+        });
+        self.pause();
+        self.notify(&t("studio.compoundStarted"), false);
+        let epoch = crate::host::project_epoch();
+        spawn_long_in_project(
+            move || {
+                let mut last = -1.0;
+                let result = concat_host::export::run_on(
+                    &request,
+                    compositor,
+                    job.cancel_flag(),
+                    |progress| {
+                        let fraction =
+                            (progress.frame as f32 / progress.total.max(1) as f32).clamp(0.0, 1.0);
+                        if fraction - last >= 0.02 || fraction < last {
+                            last = fraction;
+                            on_ui_in_project(epoch, move |studio, _, _| {
+                                if let Some(job) = studio.merge_job.as_mut() {
+                                    job.progress = fraction;
+                                }
+                            });
+                        }
+                    },
+                );
+                let cancel = job.cancel_handle();
+                (plan, rendered, output, cancel, result)
+            },
+            |studio, _, _, (plan, mut rendered, output, cancel, result)| {
+                studio.merge_job = None;
+                let written = match result {
+                    Err(Halt::Cancelled) => None,
+                    Ok(_) if cancel.load(Ordering::Relaxed) => None,
+                    Ok(_) => Some(Ok(())),
+                    Err(Halt::Failed(error)) => Some(Err(error)),
+                };
+                let Some(written) = written else {
+                    studio.notify(&t("studio.compoundCancelled"), false);
+                    return;
+                };
+                let outcome = written.and_then(|()| {
+                    let summary = media::probe(&output.to_string_lossy())?;
+                    let mut item = summary.to_new_media();
+                    item.name = t("studio.compoundClipName");
+                    item.origin = Some(model::MediaOrigin::Processed);
+                    studio.flush_commit();
+                    let command = plan.replacement(studio.project(), item)?;
+                    if studio.locked(plan.track_id()) {
+                        return Err(t("studio.mergeTrackLocked"));
+                    }
+                    studio
+                        .apply(command)
+                        .ok_or_else(|| t("studio.compoundCouldNotReplace"))
+                });
+                match outcome {
+                    Ok(id) => {
+                        rendered.keep = true;
+                        studio.selection = vec![id];
+                        studio.transition_selected = None;
+                        studio.request_media_art();
+                        studio.request_preview();
+                        studio.notify(&t("studio.compoundFinished"), false);
+                    }
+                    Err(error) => studio.notify(&tf("studio.compoundFailed", &[&error]), true),
                 }
             },
         );

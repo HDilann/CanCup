@@ -1976,6 +1976,7 @@ fn command_kind(command: &Command) -> &'static str {
         Command::FreezeFrame { .. } => "Freeze frame",
         Command::MergeClips { .. } => "Merge",
         Command::ConsolidateClips { .. } => "Merge into one clip",
+        Command::CreateCompound { .. } => "Create Compound",
         Command::RemoveClips { ripple: true, .. } => "Ripple delete",
         Command::RemoveClips { .. } => "Delete",
         Command::UpdateClip { .. } => "Change clip",
@@ -2157,7 +2158,9 @@ fn command_words(command: &Command) -> String {
                 format!("{kind} {} at {time:.2} s", clips_of(clip_ids.len()))
             }
         }
-        Command::ReplaceClipMedia { item, .. } | Command::ConsolidateClips { item, .. } => {
+        Command::ReplaceClipMedia { item, .. }
+        | Command::ConsolidateClips { item, .. }
+        | Command::CreateCompound { item, .. } => {
             format!("{kind}, now {}", file_name_of(&item.path))
         }
         Command::FreezeFrame { time, .. } => format!("{kind} at {time:.2} s"),

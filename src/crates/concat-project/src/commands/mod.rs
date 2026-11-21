@@ -21,7 +21,7 @@ use crate::model::{
 
 mod audio;
 mod clips;
-pub use clips::{PlayheadSide, consolidation_clips, delete_to_playhead, why_not_merge};
+pub use clips::{PlayheadSide, consolidation_clips, compound_clips, delete_to_playhead, why_not_merge};
 mod media;
 mod properties;
 mod timelines;
@@ -758,6 +758,14 @@ pub enum Command {
         /// The completed, probed render stored in the project media folder.
         item: NewMedia,
     },
+    /// Replaces selected clips across tracks with their host-rendered compound media,
+    /// as one undoable edit.
+    CreateCompound {
+        /// Two or more clips to merge into a compound clip.
+        clip_ids: Vec<String>,
+        /// The completed, probed render stored in the project media folder.
+        item: NewMedia,
+    },
     /// Deletes clips from the active timeline. Unknown ids are ignored.
     RemoveClips {
         /// The clips to delete.
@@ -1188,7 +1196,8 @@ impl Command {
             Command::Batch { commands } => commands.iter().any(Command::has_non_finite),
             Command::AddMedia { item }
             | Command::FillSlot { item, .. }
-            | Command::ConsolidateClips { item, .. } => bad(item.duration) || bad(item.frame_rate),
+            | Command::ConsolidateClips { item, .. }
+            | Command::CreateCompound { item, .. } => bad(item.duration) || bad(item.frame_rate),
             Command::AddClip { start, .. }
             | Command::AddClipAtFirstFree { start, .. }
             | Command::AddClipsInSequence { start, .. } => bad([*start]),
@@ -1402,6 +1411,7 @@ pub fn apply(
         | Command::SetClipEnhanced { .. }
         | Command::MergeClips { .. }
         | Command::ConsolidateClips { .. }
+        | Command::CreateCompound { .. }
         | Command::RemoveClips { .. }) => clips::apply(project, mint, command),
         command @ (Command::UpdateClip { .. }
         | Command::StyleTextRange { .. }

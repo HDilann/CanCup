@@ -9,7 +9,7 @@ use std::path::Path;
 use concat_export::{ExportRequest, flatten::flatten_timeline_in};
 use concat_project::commands::NewMedia;
 use concat_project::model::{Clip, MediaItem, Project, VideoSettings};
-use concat_project::{Command, consolidation_clips};
+use concat_project::{Command, compound_clips, consolidation_clips};
 
 /// The exact clips and media a render reads. Rechecked before replacement so
 /// editing, undo, relinking or switching timelines cannot adopt stale work.
@@ -93,6 +93,165 @@ impl Consolidation {
         // makes it round up for a source file: even a fractional last frame
         // must be available when the replacement is trimmed to the exact
         // original span. Do not stretch clips/keys/fades to achieve this.
+        let end = clips
+            .iter()
+            .map(|clip| clip.start + clip.duration)
+            .fold(0.0, f64::max);
+        let padded = (end * self.video.rate() - 1e-9).ceil() / self.video.rate();
+        if padded > end + 1e-9 {
+            let mut marker = concat_export::ExportClip::blank(
+                concat_export::ClipKind::Layer,
+                0.0,
+                padded,
+                alone.active().tracks.len(),
+            );
+            marker.hidden = true;
+            marker.muted = true;
+            marker.has_audio = Some(false);
+            clips.push(marker);
+        }
+        let hdr = self.video.color_space.is_hdr();
+        ExportRequest {
+            output: output.to_string_lossy().into_owned(),
+            canvas: self.video.canvas,
+            width: self.video.width,
+            height: self.video.height,
+            rate_num: self.video.rate_num,
+            rate_den: self.video.rate_den,
+            crf: 16,
+            preset: "fast".into(),
+            codec: if hdr {
+                crate::export::VideoCodec::Hevc
+            } else {
+                crate::export::VideoCodec::H264
+            },
+            ten_bit: hdr,
+            rate_mode: Default::default(),
+            bitrate_kbps: 0,
+            color_range: Default::default(),
+            color_space: self.video.color_space,
+            hdr,
+            effect_time_offset: start,
+            clips,
+        }
+    }
+}
+
+/// The clips and settings for a compound clip render.
+pub struct CompoundPlan {
+    timeline_id: String,
+    pub video: VideoSettings,
+    clips: Vec<Clip>,
+    media: Vec<MediaItem>,
+    target_track_id: String,
+    start: f64,
+    duration: f64,
+}
+
+impl CompoundPlan {
+    /// Captures a valid multi-clip selection for compounding.
+    pub fn new(project: &Project, ids: &[String]) -> Result<Self, String> {
+        let timeline = project.active();
+        let clips =
+            compound_clips(timeline, ids).map_err(|error| error.to_string())?;
+        let selected: std::collections::HashSet<_> = ids.iter().collect();
+        let start = clips.iter().map(|c| c.start).fold(f64::INFINITY, f64::min);
+        let end = clips.iter().map(|c| c.start + c.duration).fold(0.0, f64::max);
+        let duration = end - start;
+
+        let mut track_indices: Vec<usize> = clips
+            .iter()
+            .filter_map(|c| timeline.tracks.iter().position(|t| t.id == c.track_id))
+            .collect();
+        track_indices.sort_unstable();
+        track_indices.dedup();
+
+        let target_track_index = track_indices
+            .into_iter()
+            .find(|&idx| {
+                let track_id = &timeline.tracks[idx].id;
+                !timeline.clips.iter().any(|c| {
+                    !selected.contains(&c.id)
+                        && c.track_id == *track_id
+                        && c.start < end - 1e-6
+                        && c.start + c.duration > start + 1e-6
+                })
+            })
+            .ok_or_else(|| "Unselected clips overlap with the compound range.".to_string())?;
+        let target_track_id = timeline.tracks[target_track_index].id.clone();
+
+        let media = clips
+            .iter()
+            .filter(|clip| !clip.media_id.is_empty())
+            .map(|clip| {
+                project
+                    .media_by_id(&clip.media_id)
+                    .cloned()
+                    .ok_or_else(|| "A selected clip's media is missing.".to_owned())
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Self {
+            timeline_id: timeline.id.clone(),
+            video: timeline.video,
+            clips,
+            media,
+            target_track_id,
+            start,
+            duration,
+        })
+    }
+
+    /// The target lane for lock checking.
+    pub fn track_id(&self) -> &str {
+        &self.target_track_id
+    }
+
+    /// Generates the replacement command after render.
+    pub fn replacement(&self, project: &Project, item: NewMedia) -> Result<Command, String> {
+        let ids: Vec<_> = self.clips.iter().map(|clip| clip.id.clone()).collect();
+        if project.active().id != self.timeline_id
+            || project.active().video != self.video
+            || compound_clips(project.active(), &ids).ok().as_ref() != Some(&self.clips)
+            || self
+                .media
+                .iter()
+                .any(|media| project.media_by_id(&media.id) != Some(media))
+        {
+            return Err("The selected clips changed while creating compound. Please try again.".into());
+        }
+        Ok(Command::CreateCompound {
+            clip_ids: ids,
+            item,
+        })
+    }
+
+    /// A render of the compound selection alone.
+    pub fn request(
+        &self,
+        project: &Project,
+        folder: &Path,
+        output: &Path,
+        titles: Vec<concat_export::ExportClip>,
+    ) -> ExportRequest {
+        let mut alone = project.clone();
+        let timeline = alone.active_mut();
+        let start = self.start;
+        timeline.clips = self
+            .clips
+            .iter()
+            .cloned()
+            .map(|mut clip| {
+                clip.start -= start;
+                std::sync::Arc::new(clip)
+            })
+            .collect();
+        for track in &mut timeline.tracks {
+            track.visible = true;
+            track.muted = false;
+        }
+        let mut clips = flatten_timeline_in(&alone, None, Some(folder));
+        clips.extend(titles);
         let end = clips
             .iter()
             .map(|clip| clip.start + clip.duration)
