@@ -2044,14 +2044,6 @@ export component Lanes inherits Rectangle {
                 background: Theme.line;
             }
 
-            if track.is-zone-b-bottom: Rectangle {
-                x: 0;
-                y: parent.height - 2px;
-                width: parent.width;
-                height: 2px;
-                background: Theme.accent;
-            }
-
             // The ruler is the scrub strip: pressed and dragged, the playhead
             // follows. In the lanes a click sends the playhead too, and a
             // drag draws a band instead — the two gestures share one surface

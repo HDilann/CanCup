@@ -271,8 +271,11 @@ fn is_true(value: &bool) -> bool {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TrackZone {
+    /// Zone A: Visual tracks stacked above Main Video (Overlay Video, Image, Text, Sticker, Adjustment Layer).
     Overlay,
+    /// Zone B: The central anchor main video track.
     Main,
+    /// Zone C: Audio tracks placed below Main Video (Music, SFX, separated audio).
     Audio,
 }
 

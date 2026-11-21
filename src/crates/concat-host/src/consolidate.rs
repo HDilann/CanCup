@@ -140,6 +140,7 @@ impl Consolidation {
 /// The clips and settings for a compound clip render.
 pub struct CompoundPlan {
     timeline_id: String,
+    /// Video settings of the active timeline.
     pub video: VideoSettings,
     clips: Vec<Clip>,
     media: Vec<MediaItem>,

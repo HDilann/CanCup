@@ -142,7 +142,7 @@ pub(super) fn apply(
             style,
             duration,
             offset_y,
-            above,
+            above: _,
         } => {
             let style = style.unwrap_or_default();
             let duration = duration
@@ -178,7 +178,7 @@ pub(super) fn apply(
 
         Command::AddShapeClip {
             track_id,
-            above,
+            above: _,
             start,
             style,
             duration,
