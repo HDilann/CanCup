@@ -8,7 +8,7 @@ use std::path::Path;
 
 use concat_export::{ExportRequest, flatten::flatten_timeline_in};
 use concat_project::commands::NewMedia;
-use concat_project::model::{Clip, MediaItem, Project, VideoSettings};
+use concat_project::model::{Clip, ClipKind, MediaItem, Project, VideoSettings};
 use concat_project::{Command, compound_clips, consolidation_clips};
 
 /// The exact clips and media a render reads. Rechecked before replacement so
