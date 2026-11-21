@@ -192,10 +192,9 @@ pub(super) fn apply(
             let track_id = match track_id {
                 Some(id) if timeline.track(&id).is_some() => id,
                 Some(_) => return Err(CommandError::TrackGone),
-                None if above => first_free_track_above(timeline, start, duration)
-                    .unwrap_or_else(|| fresh_track(timeline, mint)),
-                None => first_free_track(timeline, start, duration)
-                    .unwrap_or_else(|| fresh_track(timeline, mint)),
+                None => timeline
+                    .first_free_track_in_zone(TrackZone::Overlay, start, duration)
+                    .unwrap_or_else(|| fresh_overlay_track(timeline, mint)),
             };
             let start = timeline.nearest_free_start(&track_id, start, duration, &[]);
             let id = mint.next("c");
