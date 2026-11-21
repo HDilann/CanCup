@@ -1977,6 +1977,7 @@ fn command_kind(command: &Command) -> &'static str {
         Command::MergeClips { .. } => "Merge",
         Command::ConsolidateClips { .. } => "Merge into one clip",
         Command::CreateCompound { .. } => "Create Compound",
+        Command::UncompoundClip { .. } => "Uncompound",
         Command::RemoveClips { ripple: true, .. } => "Ripple delete",
         Command::RemoveClips { .. } => "Delete",
         Command::UpdateClip { .. } => "Change clip",
@@ -2164,6 +2165,7 @@ fn command_words(command: &Command) -> String {
             format!("{kind}, now {}", file_name_of(&item.path))
         }
         Command::FreezeFrame { time, .. } => format!("{kind} at {time:.2} s"),
+        Command::UncompoundClip { clip_id } => format!("{kind} {clip_id}"),
         Command::MergeClips { clip_ids } | Command::RemoveClips { clip_ids, .. } => {
             format!("{kind} {}", clips_of(clip_ids.len()))
         }

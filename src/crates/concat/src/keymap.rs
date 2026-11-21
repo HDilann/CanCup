@@ -94,6 +94,10 @@ pub const ACTIONS: &[Action] = &[
         defaults: &["alt+g"],
     },
     Action {
+        id: "uncompound",
+        defaults: &["alt+shift+g"],
+    },
+    Action {
         id: "split",
         defaults: &["ctrl+b"],
     },
@@ -212,6 +216,7 @@ pub fn name(id: &str) -> String {
         "paste" => i18n::t("studio.paste"),
         "duplicate" => i18n::t("studio.duplicate"),
         "create-compound" => i18n::t("shortcuts.createCompound"),
+        "uncompound" => i18n::t("shortcuts.uncompound"),
         "split" => i18n::t("studio.splitAtPlayhead"),
         "delete" => i18n::t("common.delete"),
         "ripple-delete" => i18n::t("shortcuts.rippleDelete"),

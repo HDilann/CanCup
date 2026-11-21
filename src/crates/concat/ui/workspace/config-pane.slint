@@ -229,6 +229,7 @@ export component ConfigPane inherits Rectangle {
     callback beats-on-changed(on: bool);
     callback beats-marks-changed(index: int);
     callback beats-cut();
+    callback beats-auto-detect();
     callback chain-toggle(audio: bool, index: int);
     callback chain-move-by(audio: bool, index: int, delta: int);
     callback chain-remove(audio: bool, index: int);
@@ -914,6 +915,7 @@ export component ConfigPane inherits Rectangle {
                         on-changed(on) => { root.beats-on-changed(on); }
                         marks-changed(index) => { root.beats-marks-changed(index); }
                         cut => { root.beats-cut(); }
+                        auto-detect => { root.beats-auto-detect(); }
                     }
                 }
 

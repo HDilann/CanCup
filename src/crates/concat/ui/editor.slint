@@ -207,6 +207,7 @@ export global Editor {
     callback beats-on-changed(on: bool);
     callback beats-marks-changed(index: int);
     callback beats-cut();
+    callback beats-auto-detect();
     /// The Library's sound-effect shelf: `catalogue-audio` less the three
     /// treatments, which live as switches under Basic > Treatments.
     in-out property <[CatalogueEntryData]> catalogue-audio-library;

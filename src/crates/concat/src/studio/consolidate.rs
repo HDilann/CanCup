@@ -342,6 +342,38 @@ impl Studio {
             },
         );
     }
+
+    pub fn uncompound(&mut self) {
+        self.flush_commit();
+        let Some(session) = self.session.as_ref() else {
+            return;
+        };
+        let timeline = session.project().active();
+        let target_clip = self.selection.iter().find_map(|id| {
+            let clip = timeline.clips.iter().find(|c| c.id == *id)?;
+            if clip.name == "Compound Clip" || clip.extra.contains_key("compound_children") {
+                Some(clip.clone())
+            } else {
+                None
+            }
+        });
+
+        let Some(clip) = target_clip else {
+            self.notify(&t("studio.cannotUncompound"), true);
+            return;
+        };
+
+        if self.locked(&clip.track_id) {
+            self.notify(&t("studio.trackLocked"), true);
+            return;
+        }
+
+        self.apply(Command::UncompoundClip {
+            clip_id: clip.id.clone(),
+        });
+        self.request_media_art();
+        self.request_preview();
+    }
 }
 
 #[cfg(test)]

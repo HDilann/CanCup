@@ -127,6 +127,9 @@ impl Studio {
         if !is_audio && zone == concat_project::TrackZone::Audio {
             return None;
         }
+        if plan.kind == ClipKind::Adjustment && zone != concat_project::TrackZone::Overlay {
+            return None;
+        }
         plan.start = self
             .snapped(seconds.max(0.0), 8.0 * self.lanes.seconds_per_pixel, "")
             .max(0.0);

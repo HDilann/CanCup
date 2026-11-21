@@ -1597,6 +1597,9 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
     editor.on_beats_cut(on_window!(|state| {
         state.cut_on_beats();
     }));
+    editor.on_beats_auto_detect(on_window!(|state| {
+        state.auto_detect_beats(None);
+    }));
     editor.on_chain_toggle(on_window!(|state, audio: bool, index: i32| {
         state.chain_toggle(audio, index);
     }));

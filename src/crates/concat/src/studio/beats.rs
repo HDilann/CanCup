@@ -378,6 +378,33 @@ impl Studio {
             .flat_map(|clip| self.clip_beats(clip).0.into_iter().map(|(time, _)| time))
             .collect()
     }
+
+    /// Auto Beat Markers: detect transients / beats and generate timeline beat markers.
+    pub fn auto_detect_beats(&mut self, clip_id: Option<&str>) {
+        self.flush_commit();
+        let clip_opt = if let Some(id) = clip_id {
+            self.clip(id).cloned()
+        } else {
+            self.sole_selection().and_then(|id| self.clip(&id).cloned())
+        };
+        let Some(clip) = clip_opt else {
+            return;
+        };
+        if self.locked(&clip.track_id) {
+            self.notify(&crate::i18n::t("studio.trackLocked"), true);
+            return;
+        }
+        let Some(item) = self.media_item(&clip.media_id).filter(|item| sounds(item)) else {
+            return;
+        };
+        let media_id = item.id.clone();
+        self.apply(Command::SetMediaBeats {
+            media_id,
+            marks: Some(BeatMarks::Every),
+        });
+        self.request_beats();
+        self.notify(&crate::i18n::t("studio.autoBeatMarkersDetected"), false);
+    }
 }
 
 /// `beats` of a file as a clip at `start` plays them: those from

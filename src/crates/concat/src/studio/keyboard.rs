@@ -39,6 +39,7 @@ impl Studio {
             "delete-right" => self.delete_to_playhead(PlayheadSide::Right),
             "select-all" => self.select_all(),
             "create-compound" | "compound" => self.create_compound(),
+            "uncompound" | "break-apart" => self.uncompound(),
             // The phone's way out of the clip tools: nothing selected, the
             // way a press on an empty lane leaves it.
             "deselect" => {
@@ -186,6 +187,14 @@ impl Studio {
             }
             "merge" => self.merge(),
             "create-compound" | "compound" => self.create_compound(),
+            "uncompound" | "break-apart" => self.uncompound(),
+            "auto-beat-markers" => self.auto_detect_beats(Some(id)),
+            "ripple-delete" => {
+                if !self.selection.iter().any(|held| held == id) {
+                    self.selection = vec![id.to_owned()];
+                }
+                self.ripple_delete_selected();
+            }
             // On the clip that was right-clicked, which becomes the
             // selection, as Enhance's row makes it.
             "fit" | "fill" => {

@@ -263,6 +263,7 @@ export component Seat inherits Rectangle {
             beats-on-changed(on) => { Editor.beats-on-changed(on); }
             beats-marks-changed(index) => { Editor.beats-marks-changed(index); }
             beats-cut => { Editor.beats-cut(); }
+            beats-auto-detect => { Editor.beats-auto-detect(); }
 
             catalogue-effects: Editor.catalogue-effects;
             catalogue-audio: Editor.catalogue-audio;

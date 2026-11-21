@@ -857,11 +857,85 @@ pub(super) fn apply(
             compound_clip.duration = duration;
             compound_clip.name = "Compound Clip".to_string();
 
+            let original_children: Vec<Clip> = clips.iter().map(|c| (**c).clone()).collect();
+            if let Ok(serialized) = serde_json::to_value(&original_children) {
+                compound_clip.extra.insert("compound_children".to_string(), serialized);
+            }
+
             let timeline = project.active_mut();
             timeline.clips.retain(|clip| !selected.contains(&clip.id));
             timeline.clips.push(Arc::new(compound_clip));
             Ok(Outcome {
                 created_id: Some(first_id),
+                applied: true,
+            })
+        }
+
+        Command::UncompoundClip { clip_id } => {
+            let timeline = project.active();
+            let compound = timeline
+                .clips
+                .iter()
+                .find(|c| c.id == clip_id)
+                .ok_or_else(|| CommandError::NoSuchClip {
+                    clip_id: clip_id.clone(),
+                })?;
+
+            let children_val = compound
+                .extra
+                .get("compound_children")
+                .ok_or_else(|| CommandError::CannotMerge {
+                    reason: "Clip has no constituent clips to restore.".into(),
+                })?;
+
+            let original_clips: Vec<Clip> = serde_json::from_value(children_val.clone())
+                .map_err(|e| CommandError::CannotMerge {
+                    reason: format!("Failed to restore compound clips: {}", e),
+                })?;
+
+            if original_clips.is_empty() {
+                return Err(CommandError::CannotMerge {
+                    reason: "Compound clip contains no children clips.".into(),
+                });
+            }
+
+            let timeline = project.active_mut();
+            for child in &original_clips {
+                if !timeline.tracks.iter().any(|t| t.id == child.track_id) {
+                    let zone = if child.kind == ClipKind::Audio {
+                        TrackZone::Audio
+                    } else {
+                        TrackZone::Overlay
+                    };
+                    if zone == TrackZone::Audio {
+                        timeline.tracks.insert(0, Track {
+                            id: child.track_id.clone(),
+                            visible: true,
+                            muted: false,
+                            zone: Some(zone),
+                            extra: Default::default(),
+                        });
+                    } else {
+                        timeline.tracks.push(Track {
+                            id: child.track_id.clone(),
+                            visible: true,
+                            muted: false,
+                            zone: Some(zone),
+                            extra: Default::default(),
+                        });
+                    }
+                }
+            }
+
+            timeline.clips.retain(|c| c.id != clip_id);
+
+            let first_restored = original_clips.first().map(|c| c.id.clone());
+            for child in original_clips {
+                timeline.clips.push(Arc::new(child));
+            }
+
+            Ok(Outcome {
+                created_id: first_restored,
                 applied: true,
             })
         }

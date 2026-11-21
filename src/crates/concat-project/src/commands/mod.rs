@@ -766,6 +766,12 @@ pub enum Command {
         /// The completed, probed render stored in the project media folder.
         item: NewMedia,
     },
+    /// Breaks a compound clip back into its original constituent clips,
+    /// restoring them to their original tracks or appropriate zones.
+    UncompoundClip {
+        /// The compound clip to break apart.
+        clip_id: String,
+    },
     /// Deletes clips from the active timeline. Unknown ids are ignored.
     RemoveClips {
         /// The clips to delete.
@@ -1412,6 +1418,7 @@ pub fn apply(
         | Command::MergeClips { .. }
         | Command::ConsolidateClips { .. }
         | Command::CreateCompound { .. }
+        | Command::UncompoundClip { .. }
         | Command::RemoveClips { .. }) => clips::apply(project, mint, command),
         command @ (Command::UpdateClip { .. }
         | Command::StyleTextRange { .. }

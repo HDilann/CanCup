@@ -2297,6 +2297,13 @@ impl Studio {
                 self.compound_blocked().is_none(),
             ),
             action(
+                "uncompound",
+                t("studio.uncompoundClip"),
+                Glyph::Split,
+                &keymap::label(&self.prefs, "uncompound"),
+                !locked && (clip.name == "Compound Clip" || clip.extra.contains_key("compound_children")),
+            ),
+            action(
                 "freeze",
                 t("studio.freezeFrame"),
                 Glyph::Frame,
@@ -2397,6 +2404,13 @@ impl Studio {
                 "",
                 self.clip_has_sound(clip),
             ));
+            rows.push(action(
+                "auto-beat-markers",
+                t("studio.autoBeatMarkers"),
+                Glyph::Waveform,
+                "",
+                !locked && self.clip_has_sound(clip),
+            ));
             rows.push(rule());
             // Voice isolation, both ways, one click each: ticked when it is
             // what the clip plays, and chosen again to play it as recorded
@@ -2429,6 +2443,17 @@ impl Studio {
         ));
         rows.push(check("lock", &t("studio.lockTrack"), "", locked, true));
         rows.push(rule());
+        rows.push(MenuItemData {
+            id: "ripple-delete".into(),
+            label: t("studio.rippleDelete").into(),
+            kind: MenuRow::Action,
+            glyph: Glyph::Trash,
+            shortcut: keymap::label(&self.prefs, "ripple-delete").into(),
+            enabled: !locked,
+            danger: true,
+            checkable: false,
+            checked: false,
+        });
         rows.push(MenuItemData {
             id: "delete".into(),
             label: t("common.delete").into(),

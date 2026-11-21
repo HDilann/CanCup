@@ -290,6 +290,9 @@ impl Studio {
             targets.push(clip.start as f32);
             targets.push((clip.start + clip.duration) as f32);
         }
+        for beat in self.timeline_beats() {
+            targets.push(beat as f32);
+        }
         let mut best = 0.0;
         let mut best_distance = threshold;
         for &edge in edges {
