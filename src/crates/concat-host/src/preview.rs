@@ -146,6 +146,15 @@ impl Monitor {
         }
     }
 
+    /// Clears both source and treated frame caches in the reader pool to force
+    /// fresh full-resolution decodes, and evicts the cached preview plan.
+    pub fn clear_cache(&self) {
+        self.pool.clear_cache();
+        if let Ok(mut plan) = self.plan.lock() {
+            *plan = None;
+        }
+    }
+
     /// A compositor of its own on the window's device, for work off the
     /// monitor's thread - the effect cards. None without a GPU here.
     #[cfg(feature = "gpu")]

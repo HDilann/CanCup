@@ -127,7 +127,7 @@ impl Studio {
             chain.remove(at[0]);
             true
         });
-        self.host.pool.clear_cache();
+        self.host.monitor.clear_cache();
         self.request_preview();
     }
 

@@ -189,12 +189,6 @@ impl Studio {
             "create-compound" | "compound" => self.create_compound(),
             "uncompound" | "break-apart" => self.uncompound(),
             "auto-beat-markers" => self.auto_detect_beats(Some(id)),
-            "ripple-delete" => {
-                if !self.selection.iter().any(|held| held == id) {
-                    self.selection = vec![id.to_owned()];
-                }
-                self.ripple_delete_selected();
-            }
             // On the clip that was right-clicked, which becomes the
             // selection, as Enhance's row makes it.
             "fit" | "fill" => {
