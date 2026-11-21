@@ -45,6 +45,7 @@ import {
     Backdrop,
     BackdropData,
     ClipField,
+    ClipKeyData,
     ClipKind,
     Keyframes,
     SelectedClipData,
@@ -1511,7 +1512,7 @@ export component InlineKeyRow inherits Rectangle {
             IconButton {
                 glyph: Glyph.close;
                 enabled: Keyframes.available && root.state.keyed;
-                tooltip: I18n.t("common.delete");
+                label: I18n.t("common.delete");
                 clicked => { Keyframes.clear(root.field); }
             }
 
