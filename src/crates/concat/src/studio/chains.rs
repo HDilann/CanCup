@@ -127,6 +127,8 @@ impl Studio {
             chain.remove(at[0]);
             true
         });
+        self.host.pool.clear_cache();
+        self.request_preview();
     }
 
     /// One knob of one link, on the echo. `clip_commit` makes it real.

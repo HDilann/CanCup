@@ -269,7 +269,8 @@ impl Studio {
             folder: folder.clone(),
             keep: false,
         };
-        let output = folder.join("compound.mp4");
+        let ext = plan.container_extension(session.project());
+        let output = folder.join(format!("compound.{ext}"));
         let request = plan.request(session.project(), &root, &output, &self.host.titles);
         let compositor = self.host.monitor.off_thread();
         self.merge_job = Some(MergeJob {

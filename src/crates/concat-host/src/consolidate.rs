@@ -204,6 +204,36 @@ impl CompoundPlan {
         &self.target_track_id
     }
 
+    /// True when the compounded clips consist of overlays, shapes, text, transparent stills,
+    /// or lack a solid opaque full-screen video covering the canvas.
+    pub fn has_transparency(&self, project: &Project) -> bool {
+        let timeline = project.active();
+        let has_full_opaque_bg = self.clips.iter().any(|c| {
+            if c.kind == ClipKind::Video {
+                c.crop.is_none()
+                    && c.opacity >= 0.999
+                    && c.scale >= 0.999
+                    && c.offset_x.abs() < 1e-4
+                    && c.offset_y.abs() < 1e-4
+                    && timeline
+                        .track(&c.track_id)
+                        .is_some_and(|t| t.zone == Some(concat_project::TrackZone::Main))
+            } else {
+                false
+            }
+        });
+        !has_full_opaque_bg
+    }
+
+    /// The container file extension for compound rendering ("webm" for alpha, "mp4" for opaque).
+    pub fn container_extension(&self, project: &Project) -> &'static str {
+        if self.has_transparency(project) {
+            "webm"
+        } else {
+            "mp4"
+        }
+    }
+
     /// Generates the replacement command after render.
     pub fn replacement(&self, project: &Project, item: NewMedia) -> Result<Command, String> {
         let ids: Vec<_> = self.clips.iter().map(|clip| clip.id.clone()).collect();
@@ -271,26 +301,38 @@ impl CompoundPlan {
             clips.push(marker);
         }
         let hdr = self.video.color_space.is_hdr();
+        let has_alpha = self.has_transparency(project);
+        let (codec, canvas) = if has_alpha {
+            (
+                concat_media::VideoCodec::Vp9Alpha,
+                [0, 0, 0, 0], // Fully transparent canvas RGBA (0, 0, 0, 0)
+            )
+        } else {
+            (
+                if hdr {
+                    concat_media::VideoCodec::Hevc
+                } else {
+                    concat_media::VideoCodec::H264
+                },
+                self.video.canvas,
+            )
+        };
         ExportRequest {
             output: output.to_string_lossy().into_owned(),
-            canvas: self.video.canvas,
+            canvas,
             width: self.video.width,
             height: self.video.height,
             rate_num: self.video.rate_num,
             rate_den: self.video.rate_den,
             crf: 16,
             preset: "fast".into(),
-            codec: if hdr {
-                crate::export::VideoCodec::Hevc
-            } else {
-                crate::export::VideoCodec::H264
-            },
-            ten_bit: hdr,
+            codec,
+            ten_bit: hdr && !has_alpha,
             rate_mode: Default::default(),
             bitrate_kbps: 0,
             color_range: Default::default(),
             color_space: self.video.color_space,
-            hdr,
+            hdr: hdr && !has_alpha,
             effect_time_offset: start,
             clips,
         }

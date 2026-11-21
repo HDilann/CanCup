@@ -30,6 +30,7 @@ import { PaneScroll } from "pane.slint";
 export global PreviewSettings {
     in-out property <bool> guidelines: true;
     in-out property <bool> lock-guidelines: false;
+    in-out property <bool> safe-zone: false;
     in-out property <float> custom-v: 0.5;
     in-out property <float> custom-h: 0.5;
 }
@@ -482,6 +483,12 @@ export component PaneSwitcher inherits Rectangle {
                         active: PreviewSettings.lock-guidelines;
                         enabled: PreviewSettings.guidelines;
                         toggled => { PreviewSettings.lock-guidelines = !PreviewSettings.lock-guidelines; }
+                    }
+
+                    if root.kind == PaneKind.preview: GuideToggleRow {
+                        label: "Safe Zone (TikTok / Reels)";
+                        active: PreviewSettings.safe-zone;
+                        toggled => { PreviewSettings.safe-zone = !PreviewSettings.safe-zone; }
                     }
 
                     SwitchDivider { }

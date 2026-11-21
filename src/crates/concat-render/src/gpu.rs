@@ -3354,6 +3354,17 @@ impl WgpuCompositor {
         pass.draw(0..3, 0..1);
     }
 
+    /// Invalidates all pooled textures so any downscale passes or cached frames
+    /// are evicted and re-rendered at full source resolution.
+    pub fn clear_pool(&mut self) {
+        for pool in self.pool.values_mut() {
+            for tex in pool.iter_mut() {
+                tex.holds = 0;
+            }
+        }
+        self.used.clear();
+    }
+
     /// Claims a pooled texture of this size, blank, for a pass to draw into.
     fn claim(&mut self, width: u32, height: u32) -> usize {
         let key = (width, height);

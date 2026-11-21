@@ -1748,14 +1748,17 @@ impl KeyEase {
     pub const OUT: KeyEase = KeyEase([0.0, 0.0, 0.58, 1.0]);
     /// Slow at both ends.
     pub const IN_OUT: KeyEase = KeyEase([0.42, 0.0, 0.58, 1.0]);
+    /// Cubic spline smooth easing curve.
+    pub const SPLINE: KeyEase = KeyEase([0.25, 0.1, 0.25, 1.0]);
 
-    /// The four presets and what to call them, in the order the panel's
+    /// The presets and what to call them, in the order the panel's
     /// chips sit in.
-    pub const PRESETS: [(&'static str, KeyEase); 4] = [
+    pub const PRESETS: [(&'static str, KeyEase); 5] = [
         ("Linear", KeyEase::LINEAR),
         ("In", KeyEase::IN),
         ("Out", KeyEase::OUT),
         ("In · Out", KeyEase::IN_OUT),
+        ("Cubic Spline", KeyEase::SPLINE),
     ];
 
     /// The ease named by a v1 document, or linear for a name this build has
@@ -1763,9 +1766,10 @@ impl KeyEase {
     /// open and still move.
     pub fn from_name(name: &str) -> KeyEase {
         match name {
-            "in" => KeyEase::IN,
-            "out" => KeyEase::OUT,
-            "inOut" => KeyEase::IN_OUT,
+            "in" | "easeIn" | "ease-in" => KeyEase::IN,
+            "out" | "easeOut" | "ease-out" => KeyEase::OUT,
+            "inOut" | "easeInOut" | "ease-in-out" => KeyEase::IN_OUT,
+            "spline" | "cubicSpline" | "cubic-spline" => KeyEase::SPLINE,
             _ => KeyEase::LINEAR,
         }
     }

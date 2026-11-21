@@ -312,6 +312,12 @@ impl<K: Hash + Eq + Clone> FrameCache<K> {
         }
     }
 
+    /// Empties the cache completely, evicting every frame.
+    fn clear(&mut self) {
+        self.frames.clear();
+        self.held = 0;
+    }
+
     /// Drops every frame `doomed` says to.
     fn drop_where(&mut self, doomed: impl Fn(&K) -> bool) {
         let gone: Vec<K> = self
@@ -799,6 +805,16 @@ impl ReaderPool {
         }
         if let Ok(mut cache) = self.treated.lock() {
             cache.shrink_to(keep / 4);
+        }
+    }
+
+    /// Clears both source and treated frame caches to force fresh full-resolution decodes.
+    pub fn clear_cache(&self) {
+        if let Ok(mut cache) = self.sources.lock() {
+            cache.clear();
+        }
+        if let Ok(mut cache) = self.treated.lock() {
+            cache.clear();
         }
     }
 

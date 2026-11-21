@@ -1117,7 +1117,11 @@ jobs:
           & $iscc "/DVersion=$env:VERSION" "/DArch=${{ matrix.inno }}" "/DSuffix=${{ matrix.arch }}" `
             "/DStage=$PWD\stage\$name" "/DOut=$PWD\stage" assets\windows\concat.iss
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with $LASTEXITCODE" }
-          if (-not (Test-Path "stage\$name-setup.exe")) { throw "stage\$name-setup.exe is not there" }
+          $outSetup = "CanCup-$env:VERSION-windows-${{ matrix.arch }}-setup.exe"
+          if (-not (Test-Path "stage\$name-setup.exe") -and (Test-Path "stage\$outSetup")) {
+            Copy-Item "stage\$outSetup" "stage\$name-setup.exe"
+          }
+          if (-not (Test-Path "stage\$name-setup.exe")) { throw "stage setup.exe is not there" }
           Sign "stage\$name-setup.exe"
           # And the .msi, with WiX, for the machines an administrator
           # deploys to. See assets/windows/concat.wxs.

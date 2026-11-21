@@ -198,16 +198,21 @@ jobs:
           & $iscc "/DVersion=$env:VERSION" "/DArch=x64compatible" "/DSuffix=x86_64" `
             "/DStage=$PWD\stage\$name" "/DOut=$PWD\stage" assets\windows\concat.iss
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with $LASTEXITCODE" }
-          if (-not (Test-Path "stage\$name-setup.exe")) { throw "stage\$name-setup.exe is not there" }
+          $outSetup = "CanCup-$env:VERSION-windows-x86_64-setup.exe"
+          $outMsi = "CanCup-$env:VERSION-windows-x86_64.msi"
+          if (-not (Test-Path "stage\$outSetup") -and (Test-Path "stage\$name-setup.exe")) {
+            Move-Item "stage\$name-setup.exe" "stage\$outSetup"
+          }
+          if (-not (Test-Path "stage\$outSetup")) { throw "stage\$outSetup is not there" }
           dotnet tool install --global wix --version $env:WIX_VERSION | Out-Null
           wix build -arch x64 -pdbtype none "-d" "Version=$env:VERSION" "-d" "Root=$PWD" "-d" "Stage=$PWD\stage\$name" `
-            -o "stage\$name.msi" assets\windows\concat.wxs
+            -o "stage\$outMsi" assets\windows\concat.wxs
           if ($LASTEXITCODE -ne 0) { throw "WiX failed with $LASTEXITCODE" }
-          if (-not (Test-Path "stage\$name.msi")) { throw "stage\$name.msi is not there" }
+          if (-not (Test-Path "stage\$outMsi")) { throw "stage\$outMsi is not there" }
           Remove-Item -Recurse -Force "stage\$name"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: Concat-windows-x86_64
+          name: CanCup-windows-x86_64
           path: stage/*
           if-no-files-found: error

@@ -1464,7 +1464,7 @@ export component InlineKeyRow inherits Rectangle {
     in property <string> label;
     in property <ClipField> field;
     in property <KeyRowData> row-data;
-    in property <[string]> ease-options: ["Linear", "Ease In", "Ease Out", "Ease In-Out"];
+    in property <[string]> ease-options: ["Linear", "Ease In", "Ease Out", "Ease In-Out", "Cubic Spline"];
     in-out property <int> ease-choice: 0;
 
     property <ClipKeyData> state: Keyframes.row(root.field);
@@ -1575,9 +1575,16 @@ export component InlineKeyRow inherits Rectangle {
             }
 
             Select {
-                width: 82px;
+                width: 96px;
                 options: root.ease-options;
                 current <=> root.ease-choice;
+                changed(index) => {
+                    if (index == 0) { KeyEditor.set-ease(root.field, "", KeyEditor.at, 0, 0, 1, 1); }
+                    else if (index == 1) { KeyEditor.set-ease(root.field, "", KeyEditor.at, 0.42, 0, 1, 1); }
+                    else if (index == 2) { KeyEditor.set-ease(root.field, "", KeyEditor.at, 0, 0, 0.58, 1); }
+                    else if (index == 3) { KeyEditor.set-ease(root.field, "", KeyEditor.at, 0.42, 0, 0.58, 1); }
+                    else if (index == 4) { KeyEditor.set-ease(root.field, "", KeyEditor.at, 0.25, 0.1, 0.25, 1.0); }
+                }
             }
         }
 

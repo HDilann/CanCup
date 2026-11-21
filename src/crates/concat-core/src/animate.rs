@@ -53,6 +53,8 @@ impl Ease {
     pub const OUT: Ease = Ease::new(0.0, 0.0, 0.58, 1.0);
     /// Slow at both ends. CSS `ease-in-out`.
     pub const IN_OUT: Ease = Ease::new(0.42, 0.0, 0.58, 1.0);
+    /// Cubic spline smooth easing curve.
+    pub const SPLINE: Ease = Ease::new(0.25, 0.1, 0.25, 1.0);
 
     /// The four control-point numbers, as given.
     pub const fn new(x1: f64, y1: f64, x2: f64, y2: f64) -> Ease {
