@@ -6,7 +6,7 @@ name = "Mix"
 kind = "transition"
 category = "Basic"
 order = 0
-aliases = ["cross-fade"]
+aliases = ["mix"]
 description = "Smooth direct crossfade blending seamlessly between two clips without dipping to black."
 
 [transition]
