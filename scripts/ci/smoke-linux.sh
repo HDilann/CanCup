@@ -108,7 +108,7 @@ host() {
   # that could not start shipped twice on phones (#747).
   say "concat --smoke-export"
   local clip
-  clip=$(cd "$here/../../src/crates/concat-media/fixtures" && pwd)/picture-starts-late.mov
+  clip=$(cd "$here/../../src/crates/concup-media/fixtures" && pwd)/picture-starts-late.mov
   HOME=$(fresh_home) expect_ok "concat --smoke-export" 300 \
     xvfb-run -a -s "-screen 0 1920x1080x24" "$bin" --smoke-export "$clip"
 

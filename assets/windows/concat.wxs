@@ -26,8 +26,8 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of CanCup is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
-    <Icon Id="concat.ico" SourceFile="$(var.Root)\assets\icons\concat.ico" />
-    <Property Id="ARPPRODUCTICON" Value="concat.ico" />
+    <Icon Id="concup.ico" SourceFile="$(var.Root)\assets\icons\concup.ico" />
+    <Property Id="ARPPRODUCTICON" Value="concup.ico" />
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/HDilann/CanCup" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
@@ -51,21 +51,22 @@
       <Shortcut Id="StartMenuShortcut"
                 Name="CanCup"
                 Description="Video editor"
-                Target="[INSTALLFOLDER]concat.exe"
+                Target="[INSTALLFOLDER]concup.exe"
                 WorkingDirectory="INSTALLFOLDER"
-                Icon="concat.ico" />
+                Icon="concup.ico" />
       <!-- The way in when a graphics driver draws the window as coloured
            squares: it turns off Settings > General > Draw on the GPU,
            which that window hides. -->
       <Shortcut Id="SafeGraphicsShortcut"
                 Name="CanCup (safe graphics)"
                 Description="CanCup, drawn in software"
-                Target="[INSTALLFOLDER]concat.exe"
+                Target="[INSTALLFOLDER]concup.exe"
                 Arguments="--software"
                 WorkingDirectory="INSTALLFOLDER"
-                Icon="concat.ico" />
+                Icon="concup.ico" />
       <RemoveFolder Id="RemoveShortcutFolder" On="uninstall" />
       <RegistryValue Root="HKCU" Key="Software\CanCup" Name="StartMenu" Type="integer" Value="1" KeyPath="yes" />
     </Component>
   </Package>
 </Wix>
+

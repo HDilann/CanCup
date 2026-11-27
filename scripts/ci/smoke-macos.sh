@@ -73,7 +73,7 @@ HOME=$(mktemp -d) expect_ok "concat --smoke" 180 "$bin" --smoke
 # A project of a two-second clip from the media fixtures, exported through
 # the Export sheet's own messages: a launch alone never reaches an export.
 say "concat --smoke-export"
-clip=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../src/crates/concat-media/fixtures" && pwd)/picture-starts-late.mov
+clip=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../src/crates/concup-media/fixtures" && pwd)/picture-starts-late.mov
 HOME=$(mktemp -d) expect_ok "concat --smoke-export" 300 "$bin" --smoke-export "$clip"
 
 say "ok"

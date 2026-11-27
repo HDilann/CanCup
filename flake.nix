@@ -4,7 +4,7 @@
   #
   #   nix build            the editor window, ./result/bin/concat
   #   nix run              build and launch it
-  #   nix develop          a shell with everything `cargo run -p concat` needs
+  #   nix develop          a shell with everything `cargo run -p concup` needs
   #
   # The build is one Cargo workspace under src/, so cargo dependencies
   # come straight from src/Cargo.lock and there is no vendor hash to keep
@@ -115,9 +115,9 @@
     in
     {
       packages = eachSystem (pkgs: rec {
-        default = concat;
-        concat = pkgs.rustPlatform.buildRustPackage {
-          pname = "concat";
+        default = concup;
+        concup = pkgs.rustPlatform.buildRustPackage {
+          pname = "concup";
           version = "0.2.12";
           src = self;
 
@@ -126,7 +126,7 @@
           cargoLock.lockFile = ./src/Cargo.lock;
           cargoBuildFlags = [
             "-p"
-            "concat"
+            "concup"
           ];
 
           # The workspace's tests generate their own media through the
@@ -159,12 +159,12 @@
 
           desktopItems = [
             (pkgs.makeDesktopItem {
-              name = "concat";
-              exec = "concat";
-              icon = "concat";
+              name = "concup";
+              exec = "concup";
+              icon = "concup";
               desktopName = "Concat";
               comment = "Free and open source video editor";
-              startupWMClass = "concat";
+              startupWMClass = "concup";
               categories = [
                 "AudioVideo"
                 "AudioVideoEditing"
@@ -182,7 +182,7 @@
             homepage = "https://github.com/jub0t/Concat";
             license = pkgs.lib.licenses.agpl3Plus;
             platforms = systems;
-            mainProgram = "concat";
+            mainProgram = "concup";
           };
         };
       });
@@ -205,7 +205,7 @@
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath (runtimeLibs pkgs);
 
           shellHook = ''
-            echo "Concat: cd src && cargo run -p concat"
+            echo "Concat: cd src && cargo run -p concup"
           '';
         };
       });
@@ -213,3 +213,4 @@
       formatter = eachSystem (pkgs: pkgs.nixfmt-rfc-style);
     };
 }
+

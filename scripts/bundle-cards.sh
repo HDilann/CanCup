@@ -29,8 +29,9 @@ for card in "$from"/*-????????????????.jpg; do
   name="$(basename "$card")"
   id="${name%-*}"
   # Only the built-ins: a user's own package has no folder here.
-  [ -d "$root/src/crates/concat-effects/packages/$id" ] || continue
+  [ -d "$root/src/crates/concup-effects/packages/$id" ] || continue
   cp "$card" "$out/$id.jpg"
   count=$((count + 1))
 done
 echo "bundled $count cards into $out ($(du -sh "$out" | cut -f1))"
+

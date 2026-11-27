@@ -162,19 +162,19 @@ jobs:
         working-directory: src
         run: |
           set -o pipefail
-          cargo clippy --workspace --exclude concat --exclude concat-android --all-targets -- -D warnings 2>&1 | tee clippy.log
+          cargo clippy --workspace --exclude concup --exclude concup-android --all-targets -- -D warnings 2>&1 | tee clippy.log
       - name: Clippy (the window)
         timeout-minutes: 30
         working-directory: src
         run: |
           set -o pipefail
-          cargo clippy -p concat --lib --profile test -- -D warnings 2>&1 | tee clippy-window.log
+          cargo clippy -p concup --lib --profile test -- -D warnings 2>&1 | tee clippy-window.log
       - name: Clippy (the Android shell)
         timeout-minutes: 25
         working-directory: src
         run: |
           set -o pipefail
-          cargo clippy -p concat-android --all-targets --no-deps -- -D warnings 2>&1 | tee clippy-shell.log
+          cargo clippy -p concup-android --all-targets --no-deps -- -D warnings 2>&1 | tee clippy-shell.log
 
       # The tests are compiled in a step of their own, so a slow compile
       # and a slow test are told apart by which step ran out of time. One
@@ -204,7 +204,7 @@ jobs:
           set -o pipefail
           status=0
           cargo nextest run --workspace --build-jobs 1 --profile ci \
-            -E 'not package(concat-corpus)' 2>&1 | tee nextest-workspace.log || status=$?
+            -E 'not package(concup-corpus)' 2>&1 | tee nextest-workspace.log || status=$?
           mv target/nextest/ci/junit.xml target/nextest/ci/junit-workspace.xml 2>/dev/null || true
           exit "$status"
       # The corpus (src/corpus, run by concat-corpus): small projects built
@@ -224,7 +224,7 @@ jobs:
           set -o pipefail
           status=0
           cargo nextest run --workspace --build-jobs 1 --profile ci \
-            -E 'package(concat-corpus)' 2>&1 | tee nextest-corpus.log || status=$?
+            -E 'package(concup-corpus)' 2>&1 | tee nextest-corpus.log || status=$?
           mv target/nextest/ci/junit.xml target/nextest/ci/junit-corpus.xml 2>/dev/null || true
           exit "$status"
       # nextest does not run the examples in the documentation; cargo does.
@@ -241,14 +241,14 @@ jobs:
         working-directory: src
         run: |
           set -o pipefail
-          cargo clippy -p concat-server -p concat-cli --features grpc --all-targets -- -D warnings 2>&1 | tee clippy-grpc.log
+          cargo clippy -p concup-server -p concup-cli --features grpc --all-targets -- -D warnings 2>&1 | tee clippy-grpc.log
       - name: Run the gRPC tests
         timeout-minutes: 10
         working-directory: src
         run: |
           set -o pipefail
           status=0
-          cargo nextest run -p concat-server --features grpc --profile ci 2>&1 | tee nextest-grpc.log || status=$?
+          cargo nextest run -p concup-server --features grpc --profile ci 2>&1 | tee nextest-grpc.log || status=$?
           mv target/nextest/ci/junit.xml target/nextest/ci/junit-grpc.xml 2>/dev/null || true
           exit "$status"
 
@@ -410,15 +410,15 @@ jobs:
         working-directory: src
         run: |
           set -o pipefail
-          cargo check --workspace --exclude concat --all-targets 2>&1 | tee check.log
-          cargo check -p concat --bins 2>&1 | tee -a check.log
+          cargo check --workspace --exclude concup --all-targets 2>&1 | tee check.log
+          cargo check -p concup --bins 2>&1 | tee -a check.log
       - name: Check the window's tests
         if: runner.os != 'Windows' && matrix.verb == 'Compiles'
         timeout-minutes: 30
         working-directory: src
         run: |
           set -o pipefail
-          cargo check -p concat --lib --profile test 2>&1 | tee check-window.log
+          cargo check -p concup --lib --profile test 2>&1 | tee check-window.log
 
       # By the package, with cargo's own runner: nothing else is built in
       # this job, so there is no workspace build for it to disagree with.
@@ -428,7 +428,7 @@ jobs:
         working-directory: src
         run: |
           set -o pipefail
-          cargo test -p concat-corpus 2>&1 | tee nextest-corpus.log
+          cargo test -p concup-corpus 2>&1 | tee nextest-corpus.log
 
       # Windows: compile, then run, then the one scenario that has hung
       # here on its own. Each step has its own timeout, so a red run says
@@ -463,7 +463,7 @@ jobs:
         run: |
           status=0
           cargo nextest run --workspace --build-jobs 2 --profile ci \
-            -E 'not test(=every_edit_still_exports) and not package(concat-corpus)' 2>&1 | tee nextest-workspace.log || status=$?
+            -E 'not test(=every_edit_still_exports) and not package(concup-corpus)' 2>&1 | tee nextest-workspace.log || status=$?
           mv target/nextest/ci/junit.xml target/nextest/ci/junit-workspace.xml 2>/dev/null || true
           exit "$status"
       # What this Windows' AAC encoder does with a sound's start, said in
@@ -476,9 +476,9 @@ jobs:
         shell: bash
         run: |
           status=0
-          cargo nextest run -p concat-media --build-jobs 2 --profile ci --no-capture \
+          cargo nextest run -p concup-media --build-jobs 2 --profile ci --no-capture \
             -E 'test(windows_encoder_is_measured)' 2>&1 | tee nextest-encoder.log || status=$?
-          cargo nextest run -p concat-media --build-jobs 2 --profile ci 2>&1 | tee nextest-sound.log || status=$?
+          cargo nextest run -p concup-media --build-jobs 2 --profile ci 2>&1 | tee nextest-sound.log || status=$?
           mv target/nextest/ci/junit.xml target/nextest/ci/junit-sound.xml 2>/dev/null || true
           exit "$status"
       # The corpus, as on Linux: its own step and timeout, on WARP, which
@@ -492,7 +492,7 @@ jobs:
         run: |
           status=0
           cargo nextest run --workspace --build-jobs 2 --profile ci \
-            -E 'package(concat-corpus)' 2>&1 | tee nextest-corpus.log || status=$?
+            -E 'package(concup-corpus)' 2>&1 | tee nextest-corpus.log || status=$?
           mv target/nextest/ci/junit.xml target/nextest/ci/junit-corpus.xml 2>/dev/null || true
           exit "$status"
       # every_edit_still_exports passes on Linux in under a minute and has
@@ -507,7 +507,7 @@ jobs:
         shell: bash
         run: |
           status=0
-          cargo nextest run -p concat-host --test export --build-jobs 2 --profile ci --no-capture \
+          cargo nextest run -p concup-host --test export --build-jobs 2 --profile ci --no-capture \
             -E 'test(=every_edit_still_exports)' 2>&1 | tee nextest-every-edit.log || status=$?
           mv target/nextest/ci/junit.xml target/nextest/ci/junit-every-edit.xml 2>/dev/null || true
           exit "$status"
@@ -534,3 +534,4 @@ jobs:
           name: corpus-${{ matrix.os }}
           path: src/target/corpus/
           if-no-files-found: ignore
+

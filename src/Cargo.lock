@@ -1200,24 +1200,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat"
+name = "concup"
 version = "0.2.12"
 dependencies = [
  "block2 0.6.2",
- "concat-api",
- "concat-core",
- "concat-effects",
- "concat-export",
- "concat-host",
- "concat-log",
- "concat-mcp",
- "concat-media",
- "concat-project",
- "concat-render",
- "concat-server",
- "concat-speech",
- "concat-text",
- "concat-vision",
+ "concup-api",
+ "concup-core",
+ "concup-effects",
+ "concup-export",
+ "concup-host",
+ "concup-log",
+ "concup-mcp",
+ "concup-media",
+ "concup-project",
+ "concup-render",
+ "concup-server",
+ "concup-speech",
+ "concup-text",
+ "concup-vision",
  "dirs",
  "image",
  "libc",
@@ -1239,12 +1239,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-android"
+name = "concup-android"
 version = "0.2.12"
 dependencies = [
  "android-build",
  "android_logger",
- "concat",
+ "concup",
  "jni 0.22.4",
  "libc",
  "log",
@@ -1252,15 +1252,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-api"
+name = "concup-api"
 version = "0.2.12"
 dependencies = [
  "base64 0.22.1",
- "concat-core",
- "concat-effects",
- "concat-export",
- "concat-host",
- "concat-project",
+ "concup-core",
+ "concup-effects",
+ "concup-export",
+ "concup-host",
+ "concup-project",
  "png 0.17.16",
  "schemars",
  "serde",
@@ -1269,33 +1269,33 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-cli"
+name = "concup-cli"
 version = "0.2.12"
 dependencies = [
  "clap",
- "concat-api",
- "concat-core",
- "concat-effects",
- "concat-host",
- "concat-media",
- "concat-render",
- "concat-server",
+ "concup-api",
+ "concup-core",
+ "concup-effects",
+ "concup-host",
+ "concup-media",
+ "concup-render",
+ "concup-server",
  "serde_json",
 ]
 
 [[package]]
-name = "concat-core"
+name = "concup-core"
 version = "0.2.12"
 
 [[package]]
-name = "concat-corpus"
+name = "concup-corpus"
 version = "0.2.12"
 dependencies = [
  "base64 0.22.1",
- "concat-api",
- "concat-core",
- "concat-host",
- "concat-media",
+ "concup-api",
+ "concup-core",
+ "concup-host",
+ "concup-media",
  "log",
  "nv-flip",
  "png 0.17.16",
@@ -1305,7 +1305,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-doc"
+name = "concup-doc"
 version = "0.2.12"
 dependencies = [
  "proptest",
@@ -1315,11 +1315,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-effects"
+name = "concup-effects"
 version = "0.2.12"
 dependencies = [
- "concat-core",
- "concat-project",
+ "concup-core",
+ "concup-project",
  "naga",
  "serde",
  "thiserror 2.0.20",
@@ -1327,34 +1327,34 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-export"
+name = "concup-export"
 version = "0.2.12"
 dependencies = [
- "concat-core",
- "concat-effects",
- "concat-log",
- "concat-media",
- "concat-project",
- "concat-render",
- "concat-vision",
+ "concup-core",
+ "concup-effects",
+ "concup-log",
+ "concup-media",
+ "concup-project",
+ "concup-render",
+ "concup-vision",
  "log",
  "serde",
 ]
 
 [[package]]
-name = "concat-host"
+name = "concup-host"
 version = "0.2.12"
 dependencies = [
- "concat-core",
- "concat-effects",
- "concat-export",
- "concat-log",
- "concat-media",
- "concat-project",
- "concat-render",
- "concat-sched",
- "concat-text",
- "concat-vision",
+ "concup-core",
+ "concup-effects",
+ "concup-export",
+ "concup-log",
+ "concup-media",
+ "concup-project",
+ "concup-render",
+ "concup-sched",
+ "concup-text",
+ "concup-vision",
  "cpal",
  "libc",
  "log",
@@ -1373,7 +1373,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-log"
+name = "concup-log"
 version = "0.2.12"
 dependencies = [
  "log",
@@ -1381,21 +1381,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-mcp"
+name = "concup-mcp"
 version = "0.2.12"
 dependencies = [
- "concat-api",
- "concat-server",
+ "concup-api",
+ "concup-server",
  "serde_json",
  "tempfile",
 ]
 
 [[package]]
-name = "concat-media"
+name = "concup-media"
 version = "0.2.12"
 dependencies = [
- "concat-core",
- "concat-stretch",
+ "concup-core",
+ "concup-stretch",
  "ffmpeg-the-third",
  "libc",
  "log",
@@ -1405,15 +1405,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-mobile"
+name = "concup-mobile"
 version = "0.2.12"
 dependencies = [
  "android_logger",
- "concat-core",
- "concat-export",
- "concat-host",
- "concat-media",
- "concat-project",
+ "concup-core",
+ "concup-export",
+ "concup-host",
+ "concup-media",
+ "concup-project",
  "jni-sys 0.3.1",
  "log",
  "ndk 0.9.0",
@@ -1427,10 +1427,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-project"
+name = "concup-project"
 version = "0.2.12"
 dependencies = [
- "concat-core",
+ "concup-core",
  "schemars",
  "serde",
  "serde_json",
@@ -1438,14 +1438,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-render"
+name = "concup-render"
 version = "0.2.12"
 dependencies = [
  "ash",
- "concat-core",
- "concat-effects",
- "concat-log",
- "concat-vision",
+ "concup-core",
+ "concup-effects",
+ "concup-log",
+ "concup-vision",
  "half",
  "log",
  "objc2-metal 0.3.2",
@@ -1455,17 +1455,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-sched"
+name = "concup-sched"
 version = "0.2.12"
 dependencies = [
  "log",
 ]
 
 [[package]]
-name = "concat-server"
+name = "concup-server"
 version = "0.2.12"
 dependencies = [
- "concat-api",
+ "concup-api",
  "getrandom 0.3.4",
  "prost",
  "protox",
@@ -1480,14 +1480,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-speech"
+name = "concup-speech"
 version = "0.2.12"
 dependencies = [
- "concat-core",
- "concat-host",
- "concat-log",
- "concat-media",
- "concat-vision",
+ "concup-core",
+ "concup-host",
+ "concup-log",
+ "concup-media",
+ "concup-vision",
  "log",
  "ort",
  "realfft",
@@ -1499,14 +1499,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-stretch"
+name = "concup-stretch"
 version = "0.2.12"
 dependencies = [
  "cc",
 ]
 
 [[package]]
-name = "concat-text"
+name = "concup-text"
 version = "0.2.12"
 dependencies = [
  "fontdb 0.23.0",
@@ -1521,11 +1521,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-vision"
+name = "concup-vision"
 version = "0.2.12"
 dependencies = [
- "concat-core",
- "concat-project",
+ "concup-core",
+ "concup-project",
  "ort",
  "png 0.17.16",
 ]
@@ -8985,3 +8985,4 @@ dependencies = [
  "syn 3.0.4",
  "winnow",
 ]
+

@@ -93,7 +93,7 @@ jobs:
         working-directory: src
         run: |
           set -o pipefail
-          cargo build --profile app -p concat --target x86_64-pc-windows-msvc 2>&1 | tee build.log
+          cargo build --profile app -p concup --target x86_64-pc-windows-msvc 2>&1 | tee build.log
 
       - name: Build log to the summary (failure only)
         if: failure()
@@ -117,7 +117,7 @@ jobs:
           $name = "Concat-$env:VERSION-windows-x86_64"
           $dir = "stage\$name"
           New-Item -ItemType Directory -Force $dir | Out-Null
-          Copy-Item "src\target\x86_64-pc-windows-msvc\app\concat.exe" $dir
+          Copy-Item "src\target\x86_64-pc-windows-msvc\app\concup.exe" $dir
           Copy-Item "$env:FFMPEG_DIR\bin\*.dll" $dir
           Copy-Item "$env:ORT_DIR\lib\*.dll" $dir
           $built = Get-ChildItem "src\target\x86_64-pc-windows-msvc\app\build\whisper-rs-sys-*\out\bin\ggml-cpu-x64.dll" |

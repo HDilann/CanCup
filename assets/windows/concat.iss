@@ -46,8 +46,8 @@ DisableProgramGroupPage=yes
 LicenseFile=..\..\LICENSE
 OutputDir={#Out}
 OutputBaseFilename=CanCup-{#Version}-windows-{#Suffix}-setup
-SetupIconFile=..\icons\concat.ico
-UninstallDisplayIcon={app}\concat.ico
+SetupIconFile=..\icons\concup.ico
+UninstallDisplayIcon={app}\concup.ico
 UninstallDisplayName=CanCup
 Compression=lzma2/max
 SolidCompression=yes
@@ -105,14 +105,15 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#Stage}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\icons\concat.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\icons\concup.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\CanCup"; Filename: "{app}\concat.exe"; IconFilename: "{app}\concat.ico"
+Name: "{autoprograms}\CanCup"; Filename: "{app}\concup.exe"; IconFilename: "{app}\concup.ico"
 ; The way in when a graphics driver draws the window as coloured squares:
 ; it turns off Settings > General > Draw on the GPU, which that window hides.
-Name: "{autoprograms}\CanCup (safe graphics)"; Filename: "{app}\concat.exe"; Parameters: "--software"; IconFilename: "{app}\concat.ico"
-Name: "{autodesktop}\CanCup"; Filename: "{app}\concat.exe"; IconFilename: "{app}\concat.ico"; Tasks: desktopicon
+Name: "{autoprograms}\CanCup (safe graphics)"; Filename: "{app}\concup.exe"; Parameters: "--software"; IconFilename: "{app}\concup.ico"
+Name: "{autodesktop}\CanCup"; Filename: "{app}\concup.exe"; IconFilename: "{app}\concup.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\concat.exe"; Description: "{cm:LaunchProgram,CanCup}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\concup.exe"; Description: "{cm:LaunchProgram,CanCup}"; Flags: nowait postinstall skipifsilent
+
