@@ -6,11 +6,11 @@ name = "Invert Text"
 kind = "effect"
 category = "Stylize"
 order = 200
-intensity = "intensity"
+intensity = "amount"
 description = "Inverts the background colors behind text or clip glyphs, creating a negative effect."
 
 [[param]]
-key = "intensity"
+key = "amount"
 label = "Intensity"
 min = 0
 max = 100
