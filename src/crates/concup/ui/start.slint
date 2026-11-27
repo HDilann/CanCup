@@ -1035,7 +1035,7 @@ component PosterCard inherits Pressable {
 // a layout: Slint has no auto-fill grid, and a GridLayout wants its cells
 // named at compile time, which a model cannot do. Same as the bin's grid in
 // workspace/media-pane.slint.
-component ProjectsGrid inherits Rectangle {
+export component ProjectsGrid inherits Rectangle {
     in property <[RecentProjectData]> recents;
     in property <bool> enabled: true;
     in property <bool> touchy;
@@ -1427,7 +1427,7 @@ export component TextLink inherits Pressable {
 // The order the projects are in: two words in a well, the one in force on
 // a raised thumb. The search field's height, corners and ground, so the
 // two read as one set of tools.
-component SortSwitch inherits Rectangle {
+export component SortSwitch inherits Rectangle {
     in property <string> first;
     in property <string> second;
     in property <int> current;
@@ -1777,6 +1777,7 @@ component WideHome inherits Rectangle {
     callback compose();
     callback open();
     callback import-capcut();
+    callback open-settings();
     callback open-recent(path: string);
     callback forget-recent(path: string);
     callback reveal-recent(path: string);
@@ -1799,192 +1800,216 @@ component WideHome inherits Rectangle {
             x: 0;
             y: 0;
             width: parent.width;
-            padding-left: Math.max(28px, (parent.width - 1100px) / 2);
-            padding-right: Math.max(28px, (parent.width - 1100px) / 2);
-            padding-top: 16px;
-            padding-bottom: 24px;
-            spacing: 24px;
+            padding-left: Math.max(36px, parent.width * 0.04);
+            padding-right: Math.max(36px, parent.width * 0.04);
+            padding-top: 24px;
+            padding-bottom: 32px;
+            spacing: 20px;
 
-            // Hero Section (Welcome + Logo)
+            // Hero Section (Large Welcome on Left, Large Cupcake Logo on Right)
             HorizontalLayout {
-                spacing: 24px;
                 alignment: space-between;
 
                 VerticalLayout {
                     alignment: center;
-                    spacing: 8px;
+                    spacing: 12px;
                     horizontal-stretch: 1;
 
                     Text {
                         text: "Welcome to ConCup.";
                         color: #ffffff;
-                        font-size: 42px;
+                        font-size: 54px;
                         font-weight: 800;
-                        letter-spacing: -1.2px;
+                        letter-spacing: -1.5px;
                     }
 
                     HorizontalLayout {
-                        spacing: 4px;
+                        spacing: 5px;
+                        alignment: start;
+
                         Text {
                             text: "Fork by ";
                             color: #888888;
                             font-size: 14px;
                             font-weight: 400;
+                            vertical-alignment: center;
                         }
+
                         TouchArea {
-                            width: concat-link.preferred-width;
+                            width: concat-row.preferred-width;
+                            height: 20px;
                             mouse-cursor: pointer;
                             clicked => { root.link("concat-github"); }
-                            concat-link := Text {
-                                text: "Concat";
-                                color: #ffffff;
-                                font-size: 14px;
-                                font-weight: 500;
+
+                            concat-row := HorizontalLayout {
+                                spacing: 5px;
+                                alignment: center;
+
+                                Icon {
+                                    glyph: Glyph.github;
+                                    size: 15px;
+                                    tint: #ffffff;
+                                    y: (parent.height - self.height) / 2;
+                                }
+
+                                Text {
+                                    text: "Concat";
+                                    color: #ffffff;
+                                    font-size: 14px;
+                                    font-weight: 600;
+                                    vertical-alignment: center;
+                                }
                             }
                         }
+
                         Text {
                             text: ", Exercise your freedom before you die.";
                             color: #888888;
                             font-size: 14px;
                             font-weight: 400;
-                        }
-                    }
-
-                    Rectangle { height: 16px; }
-
-                    // Action buttons: + New Project, Open Project, Import from Capcut
-                    HorizontalLayout {
-                        spacing: 12px;
-
-                        // + New Project (White pill button with dark text)
-                        Rectangle {
-                            width: new-proj-text.preferred-width + 36px;
-                            height: 38px;
-                            border-radius: 8px;
-                            background: new-touch.has-hover ? #e2e2e2 : #ffffff;
-                            animate background { duration: 100ms; }
-
-                            HorizontalLayout {
-                                alignment: center;
-                                spacing: 6px;
-                                Icon {
-                                    glyph: Glyph.plus;
-                                    size: 14px;
-                                    tint: #000000;
-                                    y: (parent.height - self.height) / 2;
-                                }
-                                new-proj-text := Text {
-                                    text: "New Project";
-                                    color: #000000;
-                                    font-size: 13px;
-                                    font-weight: 700;
-                                    vertical-alignment: center;
-                                }
-                            }
-
-                            new-touch := TouchArea {
-                                enabled: !root.busy;
-                                mouse-cursor: pointer;
-                                clicked => { root.compose(); }
-                            }
-                        }
-
-                        // Open Project (Dark pill button)
-                        Rectangle {
-                            width: open-proj-text.preferred-width + 36px;
-                            height: 38px;
-                            border-radius: 8px;
-                            background: open-touch.has-hover ? #222222 : #151515;
-                            border-width: 1px;
-                            border-color: #2a2a2a;
-                            animate background { duration: 100ms; }
-
-                            HorizontalLayout {
-                                alignment: center;
-                                spacing: 6px;
-                                Icon {
-                                    glyph: Glyph.folder;
-                                    size: 14px;
-                                    tint: #ffffff;
-                                    y: (parent.height - self.height) / 2;
-                                }
-                                open-proj-text := Text {
-                                    text: "Open Project";
-                                    color: #ffffff;
-                                    font-size: 13px;
-                                    font-weight: 600;
-                                    vertical-alignment: center;
-                                }
-                            }
-
-                            open-touch := TouchArea {
-                                enabled: !root.busy;
-                                mouse-cursor: pointer;
-                                clicked => { root.open(); }
-                            }
-                        }
-
-                        // Import from Capcut (Dark pill button)
-                        if root.capcut: Rectangle {
-                            width: capcut-proj-text.preferred-width + 36px;
-                            height: 38px;
-                            border-radius: 8px;
-                            background: capcut-touch.has-hover ? #222222 : #151515;
-                            border-width: 1px;
-                            border-color: #2a2a2a;
-                            animate background { duration: 100ms; }
-
-                            HorizontalLayout {
-                                alignment: center;
-                                spacing: 6px;
-                                Icon {
-                                    glyph: Glyph.import;
-                                    size: 14px;
-                                    tint: #ffffff;
-                                    y: (parent.height - self.height) / 2;
-                                }
-                                capcut-proj-text := Text {
-                                    text: "Import from Capcut";
-                                    color: #ffffff;
-                                    font-size: 13px;
-                                    font-weight: 600;
-                                    vertical-alignment: center;
-                                }
-                            }
-
-                            capcut-touch := TouchArea {
-                                enabled: !root.busy;
-                                mouse-cursor: pointer;
-                                clicked => { root.import-capcut(); }
-                            }
+                            vertical-alignment: center;
                         }
                     }
                 }
 
-                // ConCup Cupcake Logo on the right
+                // Large Cupcake Logo on the right
                 VerticalLayout {
                     alignment: center;
-                    padding-right: 20px;
+                    padding-right: 16px;
+
                     Image {
                         source: @image-url("assets/concup-logo.png");
-                        width: 160px;
-                        height: 160px;
+                        width: 200px;
+                        height: 200px;
+                    }
+                }
+            }
+
+            // Action buttons: + New Project, Open Project, Import from Capcut
+            HorizontalLayout {
+                spacing: 12px;
+
+                // + New Project (White pill button with dark text)
+                Rectangle {
+                    width: new-proj-text.preferred-width + 36px;
+                    height: 38px;
+                    border-radius: 8px;
+                    background: new-touch.has-hover ? #e2e2e2 : #ffffff;
+                    animate background { duration: 100ms; }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 6px;
+                        Icon {
+                            glyph: Glyph.plus;
+                            size: 14px;
+                            tint: #000000;
+                            y: (parent.height - self.height) / 2;
+                        }
+                        new-proj-text := Text {
+                            text: "New Project";
+                            color: #000000;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    new-touch := TouchArea {
+                        enabled: !root.busy;
+                        mouse-cursor: pointer;
+                        clicked => { root.compose(); }
+                    }
+                }
+
+                // Open Project (Dark pill button)
+                Rectangle {
+                    width: open-proj-text.preferred-width + 36px;
+                    height: 38px;
+                    border-radius: 8px;
+                    background: open-touch.has-hover ? #222222 : #151515;
+                    border-width: 1px;
+                    border-color: #2a2a2a;
+                    animate background { duration: 100ms; }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 6px;
+                        Icon {
+                            glyph: Glyph.folder;
+                            size: 14px;
+                            tint: #ffffff;
+                            y: (parent.height - self.height) / 2;
+                        }
+                        open-proj-text := Text {
+                            text: "Open Project";
+                            color: #ffffff;
+                            font-size: 13px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    open-touch := TouchArea {
+                        enabled: !root.busy;
+                        mouse-cursor: pointer;
+                        clicked => { root.open(); }
+                    }
+                }
+
+                // Import from Capcut (Dark pill button)
+                if root.capcut: Rectangle {
+                    width: capcut-proj-text.preferred-width + 36px;
+                    height: 38px;
+                    border-radius: 8px;
+                    background: capcut-touch.has-hover ? #222222 : #151515;
+                    border-width: 1px;
+                    border-color: #2a2a2a;
+                    animate background { duration: 100ms; }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 6px;
+                        Icon {
+                            glyph: Glyph.import;
+                            size: 14px;
+                            tint: #ffffff;
+                            y: (parent.height - self.height) / 2;
+                        }
+                        capcut-proj-text := Text {
+                            text: "Import from Capcut";
+                            color: #ffffff;
+                            font-size: 13px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    capcut-touch := TouchArea {
+                        enabled: !root.busy;
+                        mouse-cursor: pointer;
+                        clicked => { root.import-capcut(); }
                     }
                 }
             }
 
             // Recents Section Panel
-            Rectangle {
+            recents-box := Rectangle {
                 border-radius: 14px;
                 background: #0d0d0d;
                 border-width: 1px;
                 border-color: #1a1a1a;
 
+                property <length> card-gap: 16px;
+                property <length> card-w: Math.max(200px, (self.width - 40px - 4 * self.card-gap) / 5);
+                property <length> card-h: (self.card-w - 16px) * 9 / 16 + 68px;
+                property <length> overflow: Math.max(0px, flick-projects.content-width - flick-projects.width);
+
                 VerticalLayout {
                     padding: 20px;
                     spacing: 16px;
 
-                    // Recents header row: Title + Search field + Settings/Sort
+                    // Recents header row: Title + Search field + Settings Gear Icon (SortSwitch removed)
                     HorizontalLayout {
                         height: 36px;
                         spacing: 14px;
@@ -1998,7 +2023,7 @@ component WideHome inherits Rectangle {
                         }
 
                         SearchField {
-                            width: 220px;
+                            width: 240px;
                             sunken: true;
                             text: root.query;
                             placeholder: "search your name project";
@@ -2007,11 +2032,26 @@ component WideHome inherits Rectangle {
 
                         Rectangle { horizontal-stretch: 1; }
 
-                        if root.searchable: SortSwitch {
-                            first: I18n.t("start.sortRecent");
-                            second: I18n.t("start.sortName");
-                            current: root.sort;
-                            changed(index) => { root.sort-changed(index); }
+                        // Settings button (Gear icon) on the right of Recents header
+                        settings-btn := Rectangle {
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 8px;
+                            background: settings-touch.has-hover ? #222222 : transparent;
+                            animate background { duration: 100ms; }
+
+                            Icon {
+                                glyph: Glyph.settings;
+                                size: 18px;
+                                tint: settings-touch.has-hover ? #ffffff : #a0a0a0;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            settings-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => { root.open-settings(); }
+                            }
                         }
                     }
 
@@ -2025,14 +2065,94 @@ component WideHome inherits Rectangle {
                         wrap: word-wrap;
                     }
 
-                    // Recents Projects Grid
-                    ProjectsGrid {
-                        recents: root.recents;
-                        enabled: !root.busy;
-                        can-reveal: true;
-                        opened(path) => { root.open-recent(path); }
-                        forgotten(path) => { root.forget-recent(path); }
-                        revealed(path) => { root.reveal-recent(path); }
+                    // Horizontal Projects List (5 cards visible)
+                    flick-projects := Flickable {
+                        visible: root.recents.length > 0;
+                        height: root.recents.length > 0 ? recents-box.card-h : 0px;
+                        content-width: root.recents.length > 0
+                            ? Math.max(self.width, root.recents.length * recents-box.card-w + Math.max(0, root.recents.length - 1) * recents-box.card-gap)
+                            : 0px;
+                        content-height: self.height;
+                        interactive: self.content-width > self.width;
+
+                        for project[idx] in root.recents: PosterCard {
+                            x: idx * (recents-box.card-w + recents-box.card-gap);
+                            y: 0;
+                            width: recents-box.card-w;
+                            height: recents-box.card-h;
+                            project: project;
+                            enabled: !root.busy;
+                            can-reveal: true;
+                            opened => { root.open-recent(project.path); }
+                            forgotten => { root.forget-recent(project.path); }
+                            revealed => { root.reveal-recent(project.path); }
+                        }
+                    }
+
+                    // Project Slider Track & Thumb below the projects
+                    slider-box := Rectangle {
+                        visible: root.recents.length > 0;
+                        height: root.recents.length > 0 ? 12px : 0px;
+
+                        track := Rectangle {
+                            y: 3px;
+                            height: 6px;
+                            border-radius: 3px;
+                            background: #181818;
+                        }
+
+                        thumb := Rectangle {
+                            y: 3px;
+                            x: recents-box.overflow > 0px
+                                ? Math.max(0px, Math.min(self.travel, self.travel * (-flick-projects.content-x) / recents-box.overflow))
+                                : 0px;
+                            width: recents-box.overflow > 0px
+                                ? Math.max(48px, Math.min(parent.width, parent.width * flick-projects.width / Math.max(1px, flick-projects.content-width)))
+                                : (root.recents.length > 5 ? 60px : Math.min(parent.width, 80px));
+                            height: 6px;
+                            border-radius: 3px;
+                            background: (slider-touch.pressed || slider-touch.has-hover) ? #606060 : #3e3e3e;
+                            animate background { duration: 100ms; }
+
+                            property <length> travel: Math.max(0px, parent.width - self.width);
+                        }
+
+                        slider-touch := TouchArea {
+                            property <length> origin;
+                            property <length> from;
+
+                            mouse-cursor: pointer;
+
+                            scroll-event(event) => {
+                                if (recents-box.overflow <= 0px) {
+                                    return reject;
+                                }
+                                let delta = event.delta-x != 0px ? event.delta-x : event.delta-y;
+                                flick-projects.content-x = Math.max(-recents-box.overflow, Math.min(0px, flick-projects.content-x + delta));
+                                accept
+                            }
+
+                            pointer-event(event) => {
+                                if (event.kind == PointerEventKind.down) {
+                                    self.origin = self.absolute-position.x + self.mouse-x;
+                                    if (self.mouse-x < thumb.x || self.mouse-x > thumb.x + thumb.width) {
+                                        self.from = thumb.travel > 0px
+                                            ? recents-box.overflow * Math.max(0px, self.mouse-x - thumb.width / 2) / thumb.travel
+                                            : 0px;
+                                        flick-projects.content-x = -Math.max(0px, Math.min(recents-box.overflow, self.from));
+                                    } else {
+                                        self.from = -flick-projects.content-x;
+                                    }
+                                }
+                            }
+
+                            moved => {
+                                if (thumb.travel > 0px) {
+                                    let target-offset = self.from + (self.absolute-position.x + self.mouse-x - self.origin) * recents-box.overflow / thumb.travel;
+                                    flick-projects.content-x = -Math.max(0px, Math.min(recents-box.overflow, target-offset));
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -2284,6 +2404,7 @@ export component StartScreen inherits Rectangle {
         compose => { root.compose(); }
         open => { root.open(); }
         import-capcut => { root.import-capcut(); }
+        open-settings => { root.open-settings(); }
         open-recent(path) => { root.open-recent(path); }
         forget-recent(path) => { root.forget-recent(path); }
         reveal-recent(path) => { root.reveal-recent(path); }

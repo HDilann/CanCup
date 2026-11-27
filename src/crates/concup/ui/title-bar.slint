@@ -329,7 +329,7 @@ export component TitleBar inherits Rectangle {
         // application — so the launch screen has no reason to be shut out of
         // it, and every reason not to be: it is now the only way through to
         // the theme.
-        if !root.covered: VerticalLayout {
+        if !root.minimal && !root.covered: VerticalLayout {
             alignment: center;
             HeaderIconButton {
                 glyph: Glyph.settings;
