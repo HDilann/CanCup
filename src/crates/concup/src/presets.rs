@@ -121,6 +121,7 @@ struct PresetStyle {
     max_height: Option<f64>,
     /// Some of the words in a look of their own; see `TextStyle::runs`.
     runs: Option<Vec<concup_project::model::TextRun>>,
+    invert_color: Option<bool>,
 }
 
 impl PresetStyle {
@@ -168,6 +169,7 @@ impl PresetStyle {
             max_width: self.max_width.unwrap_or(0.0).max(0.0),
             max_height: self.max_height.unwrap_or(0.0).max(0.0),
             runs: self.runs.unwrap_or_default(),
+            invert_color: self.invert_color.unwrap_or(base.invert_color),
         };
         // A hand-written run past the words, or on top of another, comes
         // out in the shape the editor keeps them in.
