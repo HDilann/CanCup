@@ -108,7 +108,7 @@ pub fn link(name: &str) -> Option<String> {
     Some(match name {
         "guides" => format!("{SITE}/guides/"),
         "report" => format!("{SITE}/guides/report-a-problem/"),
-        "github" => REPOSITORY.to_owned(),
+        "github" | "concat-github" => REPOSITORY.to_owned(),
         // The gradient card: this version's "What's new" post on the
         // website's blog, the polished telling of its release notes.
         "news" => format!(

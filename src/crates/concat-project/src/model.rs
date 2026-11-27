@@ -2522,6 +2522,8 @@ pub struct TextStyle {
     /// a document with them as the title in its own look.
     #[serde(skip_serializing_if = "Vec::is_empty", deserialize_with = "wire::list")]
     pub runs: Vec<TextRun>,
+    /// Invert the background colors behind text glyphs (negative text effect).
+    pub invert_color: bool,
 }
 
 impl TextStyle {
@@ -2588,6 +2590,7 @@ impl Default for TextStyle {
             max_width: 0.0,
             max_height: 0.0,
             runs: Vec::new(),
+            invert_color: false,
         }
     }
 }

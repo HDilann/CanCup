@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+﻿// SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 Jareer Abdullah
 
 import { I18n } from "i18n.slint";
@@ -1770,7 +1770,6 @@ component WideHome inherits Rectangle {
     in property <bool> busy;
     in property <string> version;
     in property <bool> can-drop;
-    /// CapCut has drafts on this machine, which can come in as projects.
     in property <bool> capcut;
 
     callback compose();
@@ -1783,231 +1782,271 @@ component WideHome inherits Rectangle {
     callback sort-changed(sort: int);
     callback link(name: string);
 
-    /// Between the panels, and between them and the window's edges.
-    property <length> gutter: 12px;
-    /// The title strip is the margin above; the panels start just under it.
-    property <length> top: 4px;
-    property <length> panel-h: root.height - root.top - root.gutter;
-    property <length> side-w: root.width >= 1180px ? 248px : 216px;
-    /// The margin the projects keep from their panel's edges.
-    property <length> inset: Math.max(20px, Math.min(36px, main.width / 28));
-    property <bool> searchable: root.recents-total > 8;
-    property <length> greeting-size: Math.max(26px, Math.min(32px, main.width / 34));
-    /// No room for the greeting and the tools on one row.
-    property <bool> stacked: main.width < 820px;
+    background: #000000;
 
-    // ── the sidebar ──────────────────────────────────────────────────
-    side := Rectangle {
-        x: root.gutter;
-        y: root.top;
-        width: root.side-w;
-        height: root.panel-h;
-        border-radius: 18px;
-        background: Theme.launch-panel;
+    flick := Flickable {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: parent.height;
+        content-width: self.width;
+        content-height: Math.max(self.height, content-col.preferred-height + 40px);
+        interactive: content-col.preferred-height + 40px > self.height;
 
-        property <int> verbs: root.capcut ? 3 : 2;
-        property <length> verbs-h: self.verbs * 44px + (self.verbs - 1) * 8px;
-        property <length> links-h: Links.desk.length * 34px;
-        property <length> news-h: 156px;
-        /// The news card is the one thing here a short window can do
-        /// without: the verbs and the links keep their room first.
-        property <bool> news: self.height >= self.verbs-h + self.links-h + self.news-h + 64px;
+        content-col := VerticalLayout {
+            x: 0;
+            y: 0;
+            width: parent.width;
+            padding-left: Math.max(28px, (parent.width - 1100px) / 2);
+            padding-right: Math.max(28px, (parent.width - 1100px) / 2);
+            padding-top: 16px;
+            padding-bottom: 24px;
+            spacing: 24px;
 
-        VerticalLayout {
-            padding: 12px;
-            spacing: 8px;
+            // Hero Section (Welcome + Logo)
+            HorizontalLayout {
+                spacing: 24px;
+                alignment: space-between;
 
-            SideButton {
-                primary: true;
-                glyph: Glyph.plus;
-                title: I18n.t("start.newProject");
-                enabled: !root.busy;
-                clicked => { root.compose(); }
-            }
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 8px;
+                    horizontal-stretch: 1;
 
-            SideButton {
-                glyph: Glyph.folder;
-                title: I18n.t("start.openProject");
-                enabled: !root.busy;
-                clicked => { root.open(); }
-            }
-
-            if root.capcut: SideButton {
-                glyph: Glyph.import;
-                title: I18n.t("start.importCapcut");
-                enabled: !root.busy;
-                clicked => { root.import-capcut(); }
-            }
-
-            Rectangle { vertical-stretch: 1; }
-
-            if side.news: NewsCard {
-                height: side.news-h;
-                small: true;
-                title: I18n.t1("start.whatsNew", root.version);
-                note: I18n.t("start.newsNote");
-                clicked => { root.link("news"); }
-            }
-
-            VerticalLayout {
-                padding-top: 4px;
-
-                for item in Links.desk: SideLink {
-                    item: item;
-                    clicked => { root.link(item.name); }
-                }
-            }
-        }
-    }
-
-    // ── the projects ─────────────────────────────────────────────────
-    main := Rectangle {
-        x: side.x + side.width + root.gutter;
-        y: root.top;
-        width: root.width - self.x - root.gutter;
-        height: root.panel-h;
-        border-radius: 18px;
-        background: Theme.launch-panel;
-        clip: true;
-
-        flick := Flickable {
-            content-width: self.width;
-            content-height: Math.max(self.height, body.preferred-height);
-            interactive: body.preferred-height > self.height;
-
-            body := VerticalLayout {
-                x: 0;
-                y: 0;
-                width: flick.width;
-                height: self.preferred-height;
-                padding: root.inset;
-                padding-top: root.inset + 2px;
-                alignment: start;
-
-                // ── the head ─────────────────────────────────────────
-                // One row: the greeting, which is the projects' heading,
-                // and at its end what works on them - the order and the
-                // search - once there are more than a page of them: by
-                // the time there are more than a screen holds, the eye is
-                // not a search.
-                if !root.stacked: HorizontalLayout {
-                    height: 44px;
-                    spacing: 10px;
-
-                    Greeting {
-                        returning: root.recents-total > 0;
-                        font-size: root.greeting-size;
-                    }
-
-                    Rectangle { horizontal-stretch: 1; }
-
-                    if root.searchable: VerticalLayout {
-                        alignment: center;
-                        SortSwitch {
-                            first: I18n.t("start.sortRecent");
-                            second: I18n.t("start.sortName");
-                            current: root.sort;
-                            changed(index) => { root.sort-changed(index); }
-                        }
-                    }
-
-                    if root.searchable: VerticalLayout {
-                        alignment: center;
-                        SearchField {
-                            width: Math.min(300px, main.width * 0.3);
-                            sunken: true;
-                            text: root.query;
-                            placeholder: I18n.t("start.searchProjects");
-                            edited(text) => { root.search-edited(text); }
-                        }
-                    }
-                }
-
-                // The same, in a panel too narrow for one row - a small
-                // window, or a language with longer words: the greeting
-                // over the tools, the search taking what the order leaves.
-                if root.stacked: VerticalLayout {
-                    spacing: 14px;
-
-                    HorizontalLayout {
-                        alignment: start;
-                        Greeting {
-                            returning: root.recents-total > 0;
-                            font-size: root.greeting-size;
-                            max-width: main.width - 2 * root.inset;
-                            wrap: word-wrap;
-                        }
-                    }
-
-                    if root.searchable: HorizontalLayout {
-                        spacing: 10px;
-
-                        SearchField {
-                            horizontal-stretch: 1;
-                            sunken: true;
-                            text: root.query;
-                            placeholder: I18n.t("start.searchProjects");
-                            edited(text) => { root.search-edited(text); }
-                        }
-
-                        SortSwitch {
-                            first: I18n.t("start.sortRecent");
-                            second: I18n.t("start.sortName");
-                            current: root.sort;
-                            changed(index) => { root.sort-changed(index); }
-                        }
-                    }
-                }
-
-                // What Concat is, for someone who has just met it.
-                if root.recents-total == 0: VerticalLayout {
-                    padding-top: 6px;
                     Text {
-                        text: I18n.t("start.welcomeNote");
+                        text: " Welcome to ConCup.\;
+ color: #ffffff;
+ font-size: 42px;
+ font-weight: 800;
+ letter-spacing: -1.2px;
+ }
+
+ HorizontalLayout {
+ spacing: 4px;
+ Text {
+ text: \Fork by \;
+ color: #888888;
+ font-size: 14px;
+ font-weight: 400;
+ }
+ TouchArea {
+ width: concat-link.preferred-width;
+ mouse-cursor: pointer;
+ clicked => { root.link(\concat-github\); }
+ concat-link := Text {
+ text: \Concat\;
+ color: #ffffff;
+ font-size: 14px;
+ font-weight: 500;
+ }
+ }
+ Text {
+ text: " Exercise your freedom before you die.\;
+                            color: #888888;
+                            font-size: 14px;
+                            font-weight: 400;
+                        }
+                    }
+
+                    Rectangle { height: 16px; }
+
+                    // Action buttons: + New Project, Open Project, Import from Capcut
+                    HorizontalLayout {
+                        spacing: 12px;
+
+                        // + New Project (White pill button with dark text)
+                        Rectangle {
+                            width: new-proj-text.preferred-width + 36px;
+                            height: 38px;
+                            border-radius: 8px;
+                            background: new-touch.has-hover ? #e2e2e2 : #ffffff;
+                            animate background { duration: 100ms; }
+
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 6px;
+                                Icon {
+                                    glyph: Glyph.plus;
+                                    size: 14px;
+                                    tint: #000000;
+                                    y: (parent.height - self.height) / 2;
+                                }
+                                new-proj-text := Text {
+                                    text: \New Project\;
+                                    color: #000000;
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            new-touch := TouchArea {
+                                enabled: !root.busy;
+                                mouse-cursor: pointer;
+                                clicked => { root.compose(); }
+                            }
+                        }
+
+                        // Open Project (Dark pill button)
+                        Rectangle {
+                            width: open-proj-text.preferred-width + 36px;
+                            height: 38px;
+                            border-radius: 8px;
+                            background: open-touch.has-hover ? #222222 : #151515;
+                            border-width: 1px;
+                            border-color: #2a2a2a;
+                            animate background { duration: 100ms; }
+
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 6px;
+                                Icon {
+                                    glyph: Glyph.folder;
+                                    size: 14px;
+                                    tint: #ffffff;
+                                    y: (parent.height - self.height) / 2;
+                                }
+                                open-proj-text := Text {
+                                    text: \Open Project\;
+                                    color: #ffffff;
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            open-touch := TouchArea {
+                                enabled: !root.busy;
+                                mouse-cursor: pointer;
+                                clicked => { root.open(); }
+                            }
+                        }
+
+                        // Import from Capcut (Dark pill button)
+                        if root.capcut: Rectangle {
+                            width: capcut-proj-text.preferred-width + 36px;
+                            height: 38px;
+                            border-radius: 8px;
+                            background: capcut-touch.has-hover ? #222222 : #151515;
+                            border-width: 1px;
+                            border-color: #2a2a2a;
+                            animate background { duration: 100ms; }
+
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 6px;
+                                Icon {
+                                    glyph: Glyph.import;
+                                    size: 14px;
+                                    tint: #ffffff;
+                                    y: (parent.height - self.height) / 2;
+                                }
+                                capcut-proj-text := Text {
+                                    text: \Import from Capcut\;
+                                    color: #ffffff;
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            capcut-touch := TouchArea {
+                                enabled: !root.busy;
+                                mouse-cursor: pointer;
+                                clicked => { root.import-capcut(); }
+                            }
+                        }
+                    }
+                }
+
+                // ConCup Cupcake Logo on the right
+                VerticalLayout {
+                    alignment: center;
+                    padding-right: 20px;
+                    Image {
+                        source: @image-url(\assets/concup-logo.png\);
+                        width: 160px;
+                        height: 160px;
+                    }
+                }
+            }
+
+            // Recents Section Panel
+            Rectangle {
+                border-radius: 14px;
+                background: #0d0d0d;
+                border-width: 1px;
+                border-color: #1a1a1a;
+
+                VerticalLayout {
+                    padding: 20px;
+                    spacing: 16px;
+
+                    // Recents header row: Title + Search field + Settings/Sort
+                    HorizontalLayout {
+                        height: 36px;
+                        spacing: 14px;
+
+                        Text {
+                            text: \Recents\;
+                            color: #ffffff;
+                            font-size: 18px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+
+                        SearchField {
+                            width: 220px;
+                            sunken: true;
+                            text: root.query;
+                            placeholder: \search your name project\;
+                            edited(text) => { root.search-edited(text); }
+                        }
+
+                        Rectangle { horizontal-stretch: 1; }
+
+                        if root.searchable: SortSwitch {
+                            first: I18n.t(\start.sortRecent\);
+                            second: I18n.t(\start.sortName\);
+                            current: root.sort;
+                            changed(index) => { root.sort-changed(index); }
+                        }
+                    }
+
+                    // Empty or no matches state
+                    if root.recents-total == 0: EmptyProjects { }
+
+                    if root.recents-total > 0 && root.recents.length == 0: Text {
+                        text: I18n.t1(\start.noMatches\, root.query);
                         color: Theme.fg-muted;
-                        font-size: Theme.fs-xl;
+                        font-size: Theme.fs-lg;
                         wrap: word-wrap;
                     }
-                }
 
-                Rectangle { height: root.recents-total == 0 ? 24px : 14px; }
-
-                if root.recents-total == 0: EmptyProjects { }
-
-                if root.recents-total > 0 && root.recents.length == 0: Text {
-                    text: I18n.t1("start.noMatches", root.query);
-                    color: Theme.fg-muted;
-                    font-size: Theme.fs-lg;
-                    wrap: word-wrap;
-                }
-
-                ProjectsGrid {
-                    recents: root.recents;
-                    enabled: !root.busy;
-                    can-reveal: true;
-                    opened(path) => { root.open-recent(path); }
-                    forgotten(path) => { root.forget-recent(path); }
-                    revealed(path) => { root.reveal-recent(path); }
+                    // Recents Projects Grid
+                    ProjectsGrid {
+                        recents: root.recents;
+                        enabled: !root.busy;
+                        can-reveal: true;
+                        opened(path) => { root.open-recent(path); }
+                        forgotten(path) => { root.forget-recent(path); }
+                        revealed(path) => { root.reveal-recent(path); }
+                    }
                 }
             }
         }
+    }
 
-        if flick.interactive: ThinScrollbar {
-            x: parent.width - self.width - 3px;
-            y: 0;
-            height: parent.height;
-            viewport: parent.height;
-            content: flick.content-height;
-            offset: -flick.content-y;
-            scrolled(to) => { flick.content-y = -to; }
-        }
+    if flick.interactive: ThinScrollbar {
+        x: parent.width - self.width - 3px;
+        y: 0;
+        height: parent.height;
+        viewport: parent.height;
+        content: flick.content-height;
+        offset: -flick.content-y;
+        scrolled(to) => { flick.content-y = -to; }
     }
 }
-
-// The narrow page: a phone held upright, or a desk's window squeezed that
-// far. Stacked the way a phone's own apps are - the greeting with Settings
-// beside it, New project across the width under the thumb, the projects as
-// a list, and the learn cards as one grouped list at the foot.
 component NarrowHome inherits Rectangle {
     in property <[RecentProjectData]> recents;
     in property <int> recents-total;

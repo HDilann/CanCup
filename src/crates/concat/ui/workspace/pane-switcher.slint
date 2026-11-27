@@ -33,6 +33,16 @@ export global PreviewSettings {
     in-out property <bool> safe-zone: false;
     in-out property <float> custom-v: 0.5;
     in-out property <float> custom-h: 0.5;
+    in-out property <bool> has-custom-v: true;
+    in-out property <bool> has-custom-h: true;
+    in-out property <float> custom-v2: 0.25;
+    in-out property <bool> has-custom-v2: false;
+    in-out property <float> custom-v3: 0.75;
+    in-out property <bool> has-custom-v3: false;
+    in-out property <float> custom-h2: 0.25;
+    in-out property <bool> has-custom-h2: false;
+    in-out property <float> custom-h3: 0.75;
+    in-out property <bool> has-custom-h3: false;
 }
 
 // that was drawing it.
@@ -227,6 +237,45 @@ component RemoveRow inherits Rectangle {
     }
 }
 
+component GuideActionRow inherits Rectangle {
+    in property <string> label;
+    in property <bool> enabled: true;
+    callback chosen();
+
+    height: 26px;
+    opacity: root.enabled ? 1.0 : 0.4;
+
+    Rectangle {
+        x: 4px;
+        y: 0;
+        width: parent.width - 8px;
+        height: parent.height;
+        border-radius: Theme.r-sm;
+        background: touch.has-hover && root.enabled ? Theme.field-hover : Colors.transparent;
+
+        HorizontalLayout {
+            padding-left: 8px;
+            padding-right: 8px;
+            spacing: 8px;
+
+            Text {
+                horizontal-stretch: 1;
+                text: root.label;
+                color: root.enabled ? Theme.fg : Theme.fg-dim;
+                font-size: Theme.fs;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+        }
+
+        touch := TouchArea {
+            enabled: root.enabled;
+            mouse-cursor: pointer;
+            clicked => { root.chosen(); }
+        }
+    }
+}
+
 component GuideToggleRow inherits Rectangle {
     in property <string> label;
     in property <bool> active;
@@ -314,16 +363,10 @@ export component PaneSwitcher inherits Rectangle {
     property <string> payload:
         "pane:\{root.seat}:\{Panes.label(root.kind)}:\{Panes.id(root.kind)}";
 
-    property <length> menu-w: 168px;
-    /// Five view rows, then the rule and the row that removes the panel, then
-    /// the surface's own padding. Summed here because a PopupWindow is sized
-    /// by whoever places it — the same rule the context menu follows, and the
-    /// same reason: a layout cannot report its height back up before it has
-    /// somewhere to be laid out. When the Keyframes row arrived this still
-    /// said four, and the row that removes the panel was the one under the
-    /// clip.
+    property <length> menu-w: 184px;
+    /// Five view rows, then guidelines, actions, safe zone, rules and remove panel.
     property <length> list-h: root.kind == PaneKind.preview
-        ? (7 * 26px + 2 * 9px + 26px + 8px)
+        ? (10 * 26px + 3 * 9px + 26px + 8px)
         : (5 * 26px + 9px + 26px + 8px);
     /// The whole list when the window has room for it under the button, and
     /// the room otherwise, with the rest reached by scrolling. Never under
@@ -489,6 +532,57 @@ export component PaneSwitcher inherits Rectangle {
                         label: "Safe Zone (TikTok / Reels)";
                         active: PreviewSettings.safe-zone;
                         toggled => { PreviewSettings.safe-zone = !PreviewSettings.safe-zone; }
+                    }
+
+                    if root.kind == PaneKind.preview: SwitchDivider { }
+
+                    if root.kind == PaneKind.preview: GuideActionRow {
+                        label: "+ Add Horizontal Guideline";
+                        chosen => {
+                            menu.close();
+                            PreviewSettings.guidelines = true;
+                            if !PreviewSettings.has-custom-h {
+                                PreviewSettings.has-custom-h = true;
+                                PreviewSettings.custom-h = 0.5;
+                            } else if !PreviewSettings.has-custom-h2 {
+                                PreviewSettings.has-custom-h2 = true;
+                                PreviewSettings.custom-h2 = 0.33;
+                            } else if !PreviewSettings.has-custom-h3 {
+                                PreviewSettings.has-custom-h3 = true;
+                                PreviewSettings.custom-h3 = 0.66;
+                            }
+                        }
+                    }
+
+                    if root.kind == PaneKind.preview: GuideActionRow {
+                        label: "+ Add Vertical Guideline";
+                        chosen => {
+                            menu.close();
+                            PreviewSettings.guidelines = true;
+                            if !PreviewSettings.has-custom-v {
+                                PreviewSettings.has-custom-v = true;
+                                PreviewSettings.custom-v = 0.5;
+                            } else if !PreviewSettings.has-custom-v2 {
+                                PreviewSettings.has-custom-v2 = true;
+                                PreviewSettings.custom-v2 = 0.33;
+                            } else if !PreviewSettings.has-custom-v3 {
+                                PreviewSettings.has-custom-v3 = true;
+                                PreviewSettings.custom-v3 = 0.66;
+                            }
+                        }
+                    }
+
+                    if root.kind == PaneKind.preview: GuideActionRow {
+                        label: "Clear Guidelines";
+                        chosen => {
+                            menu.close();
+                            PreviewSettings.has-custom-v = false;
+                            PreviewSettings.has-custom-v2 = false;
+                            PreviewSettings.has-custom-v3 = false;
+                            PreviewSettings.has-custom-h = false;
+                            PreviewSettings.has-custom-h2 = false;
+                            PreviewSettings.has-custom-h3 = false;
+                        }
                     }
 
                     SwitchDivider { }

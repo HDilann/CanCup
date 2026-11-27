@@ -371,6 +371,7 @@ fn mix(blend: Blend, colour: f32, under: f32, alpha: f32) -> f32 {
         Blend::Add => over + under,
         Blend::Lighten => colour.max(under) * alpha + under * (1.0 - alpha),
         Blend::Darken => colour.min(under) * alpha + under * (1.0 - alpha),
+        Blend::Invert => (255.0 - under) * alpha + under * (1.0 - alpha),
     }
 }
 

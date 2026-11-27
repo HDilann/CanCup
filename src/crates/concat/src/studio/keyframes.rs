@@ -1412,6 +1412,7 @@ impl Studio {
             stroke_hex: hex_of(stroke).into(),
             stroke_opacity: f32::from(stroke.alpha()) / 255.0,
             shadow: text.shadow,
+            invert_color: text.invert_color,
             plate,
             plate_hex: hex_of(plate).into(),
             plated: plate.alpha() > 0,

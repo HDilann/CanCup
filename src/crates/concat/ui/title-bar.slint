@@ -22,6 +22,26 @@ import { AddPaneButton, PaneKind } from "workspace/pane-switcher.slint";
 // the 24px icon buttons beside Settings: wider than tall, flush with the top
 // and right edges of the window, no rounding - a target you can throw the
 // pointer at the corner to hit. Close hovers red, as it does everywhere.
+component CircleWindowButton inherits Rectangle {
+    in property <color> base-color;
+    in property <bool> enabled: true;
+    callback clicked();
+
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    background: root.base-color;
+    opacity: !root.enabled ? 0.35 : touch.has-hover ? 0.8 : 1.0;
+
+    animate opacity { duration: 100ms; }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+}
+
 component WindowButton inherits Rectangle {
     in property <Glyph> glyph;
     in property <bool> danger;
@@ -204,15 +224,46 @@ export component TitleBar inherits Rectangle {
         y: 0;
         width: parent.width;
         height: parent.height;
-        padding-left: root.macos ? 80px : 8px;
-        // No right padding when the strip ends in its own buttons: the close
-        // button belongs in the corner, not eight pixels shy of it.
-        padding-right: root.own-buttons ? 0px : 8px;
-        spacing: 2px;
+        padding-left: root.macos ? 80px : 12px;
+        padding-right: 0px;
+        spacing: 6px;
 
-        // No mark and no wordmark: the strip opens on the menus. A window
-        // does not need to say whose it is on every frame, and the launch
-        // screen's heading already carries the name where it means something.
+        if root.minimal: HorizontalLayout {
+            alignment: center;
+            spacing: 8px;
+            Image {
+                source: @image-url("assets/win11-logo.png");
+                width: 16px;
+                height: 16px;
+                y: (parent.height - self.height) / 2;
+            }
+            Text {
+                text: "Windows 11 Pro 2H26 - ConCup v0.2.13";
+                color: Theme.fg;
+                font-size: 11px;
+                font-weight: 700;
+                vertical-alignment: center;
+            }
+        }
+
+        if !root.minimal: HorizontalLayout {
+            alignment: center;
+            spacing: 8px;
+            padding-right: 4px;
+            Image {
+                source: @image-url("assets/win11-logo.png");
+                width: 15px;
+                height: 15px;
+                y: (parent.height - self.height) / 2;
+            }
+            Text {
+                text: "ConCup";
+                color: Theme.fg;
+                font-size: 12px;
+                font-weight: 700;
+                vertical-alignment: center;
+            }
+        }
 
         // Each label reports its own position rather than a fixed one: they
         // are sized from their text, so where "View" starts depends on how
@@ -294,7 +345,7 @@ export component TitleBar inherits Rectangle {
                 width: label.width + icon.width + 26px;
                 height: 24px;
                 border-radius: Theme.r-sm;
-                background: export-touch.has-hover ? Theme.accent-hover : Theme.accent;
+                background: export-touch.has-hover ? #c0eb2d : #D4FF33;
 
                 animate background { duration: 100ms; easing: cubic-bezier(0.4, 0, 0.2, 1); }
 
@@ -303,14 +354,14 @@ export component TitleBar inherits Rectangle {
                     y: (parent.height - self.height) / 2;
                     glyph: Glyph.export;
                     size: 12px;
-                    tint: Theme.on-accent;
+                    tint: #000000;
                 }
 
                 label := Text {
                     x: icon.x + icon.width + 5px;
                     y: (parent.height - self.height) / 2;
                     text: I18n.t("common.export");
-                    color: Theme.on-accent;
+                    color: #000000;
                     font-size: Theme.fs;
                     font-weight: Theme.weight-title;
                 }
@@ -322,25 +373,28 @@ export component TitleBar inherits Rectangle {
             }
         }
 
-        // The window's own buttons, last so they sit flush against the right
-        // edge. Full height of the strip, no vertical centring: a caption
-        // button's target is the whole strip height, corner included.
-        if root.own-buttons: Rectangle { width: 6px; }
-        if root.own-buttons: HorizontalLayout {
-            spacing: 0px;
-            WindowButton {
-                glyph: Glyph.minus;
-                clicked => { root.minimize(); }
-            }
-            WindowButton {
-                glyph: root.maximized ? Glyph.copy : Glyph.maximize;
-                clicked => { root.toggle-maximize(); }
-            }
-            WindowButton {
-                glyph: Glyph.close;
-                danger: true;
-                enabled: root.can-close;
-                clicked => { root.close(); }
+        // The window's own buttons: macOS-style circular window controls
+        // Green (minimize), Orange (fit screen/maximize), Red (close)
+        if root.own-buttons: Rectangle { width: 8px; }
+        if root.own-buttons: VerticalLayout {
+            alignment: center;
+            padding-right: 12px;
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: center;
+                CircleWindowButton {
+                    base-color: #28c840;
+                    clicked => { root.minimize(); }
+                }
+                CircleWindowButton {
+                    base-color: #febc2e;
+                    clicked => { root.toggle-maximize(); }
+                }
+                CircleWindowButton {
+                    base-color: #ff5f57;
+                    enabled: root.can-close;
+                    clicked => { root.close(); }
+                }
             }
         }
     }

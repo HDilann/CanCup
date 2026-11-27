@@ -743,17 +743,17 @@ component StageOverlay inherits Rectangle {
             opacity: 0.45;
         }
 
-        // Custom vertical guideline
-        Rectangle {
+        // Custom vertical guideline 1
+        if PreviewSettings.has-custom-v: Rectangle {
             x: root.width * PreviewSettings.custom-v - 0.5px;
             y: 0;
             width: 1px;
             height: parent.height;
             background: #5fb8ff;
-            opacity: 0.75;
+            opacity: 0.85;
         }
 
-        if !PreviewSettings.lock-guidelines: TouchArea {
+        if PreviewSettings.has-custom-v && !PreviewSettings.lock-guidelines: TouchArea {
             x: root.width * PreviewSettings.custom-v - 8px;
             y: 0;
             width: 16px;
@@ -762,22 +762,76 @@ component StageOverlay inherits Rectangle {
 
             moved => {
                 if (self.pressed && root.width > 0) {
-                    PreviewSettings.custom-v = Math.max(0.02, Math.min(0.98, (self.mouse-x + self.x) / root.width));
+                    let pos = (self.mouse-x + self.x) / root.width;
+                    if (Math.abs(pos - 0.5) < 0.015) { pos = 0.5; }
+                    PreviewSettings.custom-v = Math.max(0.02, Math.min(0.98, pos));
                 }
             }
         }
 
-        // Custom horizontal guideline
-        Rectangle {
+        // Custom vertical guideline 2
+        if PreviewSettings.has-custom-v2: Rectangle {
+            x: root.width * PreviewSettings.custom-v2 - 0.5px;
+            y: 0;
+            width: 1px;
+            height: parent.height;
+            background: #5fb8ff;
+            opacity: 0.85;
+        }
+
+        if PreviewSettings.has-custom-v2 && !PreviewSettings.lock-guidelines: TouchArea {
+            x: root.width * PreviewSettings.custom-v2 - 8px;
+            y: 0;
+            width: 16px;
+            height: parent.height;
+            mouse-cursor: col-resize;
+
+            moved => {
+                if (self.pressed && root.width > 0) {
+                    let pos = (self.mouse-x + self.x) / root.width;
+                    if (Math.abs(pos - 0.5) < 0.015) { pos = 0.5; }
+                    PreviewSettings.custom-v2 = Math.max(0.02, Math.min(0.98, pos));
+                }
+            }
+        }
+
+        // Custom vertical guideline 3
+        if PreviewSettings.has-custom-v3: Rectangle {
+            x: root.width * PreviewSettings.custom-v3 - 0.5px;
+            y: 0;
+            width: 1px;
+            height: parent.height;
+            background: #5fb8ff;
+            opacity: 0.85;
+        }
+
+        if PreviewSettings.has-custom-v3 && !PreviewSettings.lock-guidelines: TouchArea {
+            x: root.width * PreviewSettings.custom-v3 - 8px;
+            y: 0;
+            width: 16px;
+            height: parent.height;
+            mouse-cursor: col-resize;
+
+            moved => {
+                if (self.pressed && root.width > 0) {
+                    let pos = (self.mouse-x + self.x) / root.width;
+                    if (Math.abs(pos - 0.5) < 0.015) { pos = 0.5; }
+                    PreviewSettings.custom-v3 = Math.max(0.02, Math.min(0.98, pos));
+                }
+            }
+        }
+
+        // Custom horizontal guideline 1
+        if PreviewSettings.has-custom-h: Rectangle {
             x: 0;
             y: root.height * PreviewSettings.custom-h - 0.5px;
             width: parent.width;
             height: 1px;
             background: #5fb8ff;
-            opacity: 0.75;
+            opacity: 0.85;
         }
 
-        if !PreviewSettings.lock-guidelines: TouchArea {
+        if PreviewSettings.has-custom-h && !PreviewSettings.lock-guidelines: TouchArea {
             x: 0;
             y: root.height * PreviewSettings.custom-h - 8px;
             width: parent.width;
@@ -786,7 +840,61 @@ component StageOverlay inherits Rectangle {
 
             moved => {
                 if (self.pressed && root.height > 0) {
-                    PreviewSettings.custom-h = Math.max(0.02, Math.min(0.98, (self.mouse-y + self.y) / root.height));
+                    let pos = (self.mouse-y + self.y) / root.height;
+                    if (Math.abs(pos - 0.5) < 0.015) { pos = 0.5; }
+                    PreviewSettings.custom-h = Math.max(0.02, Math.min(0.98, pos));
+                }
+            }
+        }
+
+        // Custom horizontal guideline 2
+        if PreviewSettings.has-custom-h2: Rectangle {
+            x: 0;
+            y: root.height * PreviewSettings.custom-h2 - 0.5px;
+            width: parent.width;
+            height: 1px;
+            background: #5fb8ff;
+            opacity: 0.85;
+        }
+
+        if PreviewSettings.has-custom-h2 && !PreviewSettings.lock-guidelines: TouchArea {
+            x: 0;
+            y: root.height * PreviewSettings.custom-h2 - 8px;
+            width: parent.width;
+            height: 16px;
+            mouse-cursor: row-resize;
+
+            moved => {
+                if (self.pressed && root.height > 0) {
+                    let pos = (self.mouse-y + self.y) / root.height;
+                    if (Math.abs(pos - 0.5) < 0.015) { pos = 0.5; }
+                    PreviewSettings.custom-h2 = Math.max(0.02, Math.min(0.98, pos));
+                }
+            }
+        }
+
+        // Custom horizontal guideline 3
+        if PreviewSettings.has-custom-h3: Rectangle {
+            x: 0;
+            y: root.height * PreviewSettings.custom-h3 - 0.5px;
+            width: parent.width;
+            height: 1px;
+            background: #5fb8ff;
+            opacity: 0.85;
+        }
+
+        if PreviewSettings.has-custom-h3 && !PreviewSettings.lock-guidelines: TouchArea {
+            x: 0;
+            y: root.height * PreviewSettings.custom-h3 - 8px;
+            width: parent.width;
+            height: 16px;
+            mouse-cursor: row-resize;
+
+            moved => {
+                if (self.pressed && root.height > 0) {
+                    let pos = (self.mouse-y + self.y) / root.height;
+                    if (Math.abs(pos - 0.5) < 0.015) { pos = 0.5; }
+                    PreviewSettings.custom-h3 = Math.max(0.02, Math.min(0.98, pos));
                 }
             }
         }

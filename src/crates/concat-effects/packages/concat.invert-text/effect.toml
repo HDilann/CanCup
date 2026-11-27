@@ -1,0 +1,23 @@
+format = 2
+
+[effect]
+id = "concat.invert-text"
+name = "Invert Text"
+kind = "effect"
+category = "Stylize"
+order = 200
+intensity = "intensity"
+description = "Inverts the background colors behind text or clip glyphs, creating a negative effect."
+
+[[param]]
+key = "intensity"
+label = "Intensity"
+min = 0
+max = 100
+default = 100
+step = 1
+unit = "%"
+
+[wgsl]
+entry = "effect.wgsl"
+space = "display"

@@ -343,6 +343,7 @@ impl Studio {
                 }
                 ClipField::StrokeWidth => text.stroke_width = value.clamp(0.0, 0.15),
                 ClipField::Shadow => text.shadow = value != 0.0,
+                ClipField::InvertColor => text.invert_color = value != 0.0,
                 ClipField::LineHeight => text.line_height = value.clamp(0.7, 2.5),
                 ClipField::Tracking => text.tracking = value.clamp(-0.05, 0.3),
                 ClipField::TextWidth => text.max_width = value.clamp(0.0, 2.0),

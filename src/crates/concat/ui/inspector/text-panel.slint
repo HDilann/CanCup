@@ -520,6 +520,15 @@ export component TextPanel inherits VerticalLayout {
             toggled(on) => { root.set(ClipField.shadow, on ? 1 : 0); root.commit(); }
         }
 
+        SwitchRow {
+            label: I18n.t("textPanel.invertTextColor");
+            checked: root.selected.invert-color;
+
+            HelpButton { text: I18n.t("textPanel.invertTextColorHint"); }
+
+            toggled(on) => { root.set(ClipField.invert-color, on ? 1 : 0); root.commit(); }
+        }
+
         // The background: the plate, to the painter and the document. A
         // colour, not a flag - turning it off is clearing it, and fully
         // transparent is what "none" is stored as.

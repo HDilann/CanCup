@@ -357,7 +357,14 @@ impl Titles {
                     fade_out: clip.fade_out,
                     flip_h: clip.flip_h,
                     flip_v: clip.flip_v,
-                    blend: clip.blend.clone(),
+                    blend: {
+                        let is_text_invert = clip.text.as_ref().map_or(false, |t| t.invert_color);
+                        if is_text_invert || clip.blend == "invert" {
+                            "invert".to_string()
+                        } else {
+                            clip.blend.clone()
+                        }
+                    },
                     effects: clip.video_effects.clone(),
                     // A keyed property's keys travel absolute, on a
                     // neutral base, as a media clip's do: the clip's own

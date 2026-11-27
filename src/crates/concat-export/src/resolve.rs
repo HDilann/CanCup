@@ -338,7 +338,12 @@ pub(crate) fn build_timeline(
         }
         engine_clip.animation = animation_of(&clip.animation);
         engine_clip.motion = clip.motion.as_ref().and_then(|motion| motion.engine());
-        engine_clip.blend = concat_core::timeline::Blend::parse(&clip.blend);
+        let blend_str = if clip.effects.iter().any(|e| e.id.contains("invert")) {
+            "invert"
+        } else {
+            &clip.blend
+        };
+        engine_clip.blend = concat_core::timeline::Blend::parse(blend_str);
         engine_clip.masks = clip.masks.iter().map(Mask::engine).collect();
         engine_clip.overscan = overscan_of(clip);
         engine_clip.transform = Transform {

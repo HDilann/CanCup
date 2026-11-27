@@ -342,6 +342,14 @@ fn fs_darken(in: VsOut) -> @location(0) vec4<f32> {
     let s = shade(in);
     return vec4<f32>(min(s.rgb, ground_at(in.position)) * s.a, s.a);
 }
+
+@fragment
+fn fs_invert(in: VsOut) -> @location(0) vec4<f32> {
+    let s = shade(in);
+    let bg = ground_at(in.position);
+    let inv = vec3<f32>(1.0, 1.0, 1.0) - bg;
+    return vec4<f32>(inv * s.a, s.a);
+}
 "#;
 
 /// The format everything is drawn in: half floats a channel, so a stack
@@ -1119,9 +1127,9 @@ pub struct WgpuCompositor {
     queue: wgpu::Queue,
     /// One pipeline per blend mode, indexed as `Blend::ALL` is.
     pipelines: Vec<wgpu::RenderPipeline>,
-    /// Lighten, then Darken: the two blends that sample the ground, drawn
+    /// Lighten, Darken, then Invert: the three blends that sample the ground, drawn
     /// with a third bind group and plain source-over.
-    ground_pipelines: [wgpu::RenderPipeline; 2],
+    ground_pipelines: [wgpu::RenderPipeline; 3],
     /// An uploaded frame into the working format.
     upload_pipeline: wgpu::RenderPipeline,
     /// A finished frame out of the working format into eight bits: as it
@@ -1824,6 +1832,11 @@ impl WgpuCompositor {
                         dst_factor: BlendFactor::One,
                         operation: BlendOperation::Min,
                     },
+                    Blend::Invert => wgpu::BlendComponent {
+                        src_factor: BlendFactor::One,
+                        dst_factor: BlendFactor::OneMinusSrcAlpha,
+                        operation: BlendOperation::Add,
+                    },
                 };
                 device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                     label: Some("concat compositor"),
@@ -1853,15 +1866,15 @@ impl WgpuCompositor {
             })
             .collect();
 
-        // Lighten and Darken: source-over of a fragment that has already
-        // taken the max or min against a copy of the ground, bound as a
-        // third group of the same shape as the layer and its mask.
+        // Lighten, Darken, and Invert: source-over of a fragment that samples
+        // a copy of the ground, bound as a third group of the same shape as
+        // the layer and its mask.
         let ground_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("concat compositor ground"),
             bind_group_layouts: &[Some(&bind_layout), Some(&bind_layout), Some(&bind_layout)],
             immediate_size: 0,
         });
-        let ground_pipelines = ["fs_lighten", "fs_darken"].map(|entry| {
+        let ground_pipelines = ["fs_lighten", "fs_darken", "fs_invert"].map(|entry| {
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some(entry),
                 layout: Some(&ground_layout),
@@ -2342,7 +2355,7 @@ impl WgpuCompositor {
             Some(stack) => self.mask_pass(layer.mask.as_deref(), &stack, &geometry),
             None => self.mask_of(layer.mask.as_deref()),
         };
-        let ground = matches!(layer.blend, Blend::Lighten | Blend::Darken)
+        let ground = matches!(layer.blend, Blend::Lighten | Blend::Darken | Blend::Invert)
             .then(|| self.claim(plan.width, plan.height));
         draws.push(Draw {
             size,
@@ -2922,7 +2935,11 @@ impl WgpuCompositor {
         for &(index, draw) in draws {
             match draw.ground {
                 Some(ground) => {
-                    let which = usize::from(draw.blend == Blend::Darken);
+                    let which = match draw.blend {
+                        Blend::Darken => 1,
+                        Blend::Invert => 2,
+                        _ => 0,
+                    };
                     pass.set_pipeline(&self.ground_pipelines[which]);
                     pass.set_bind_group(2, &self.pool[&size][ground].bind_group, &[]);
                 }

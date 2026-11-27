@@ -158,7 +158,11 @@ pub fn flatten_timeline_in(
                 motion: clip.motion.clone(),
                 flip_h: clip.flip_h,
                 flip_v: clip.flip_v,
-                blend: clip.blend.clone(),
+                blend: if clip.video_effects.iter().any(|e| e.id.contains("invert")) {
+                    "invert".to_string()
+                } else {
+                    clip.blend.clone()
+                },
                 crop: clip
                     .crop
                     .filter(|crop| !crop.is_none())

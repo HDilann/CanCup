@@ -140,17 +140,20 @@ pub enum Blend {
     Lighten,
     /// The darker of the two, per channel.
     Darken,
+    /// Invert: inverts the underlying ground colour behind the layer (Negative effect).
+    Invert,
 }
 
 impl Blend {
     /// Every mode, in menu order.
-    pub const ALL: [Blend; 6] = [
+    pub const ALL: [Blend; 7] = [
         Blend::Normal,
         Blend::Multiply,
         Blend::Screen,
         Blend::Add,
         Blend::Lighten,
         Blend::Darken,
+        Blend::Invert,
     ];
 
     /// The mode's name in a document: "normal", "multiply", ...
@@ -162,6 +165,7 @@ impl Blend {
             Blend::Add => "add",
             Blend::Lighten => "lighten",
             Blend::Darken => "darken",
+            Blend::Invert => "invert",
         }
     }
 
