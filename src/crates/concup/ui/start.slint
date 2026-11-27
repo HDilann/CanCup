@@ -1814,34 +1814,34 @@ component WideHome inherits Rectangle {
                     horizontal-stretch: 1;
 
                     Text {
-                        text: " Welcome to ConCup.\;
- color: #ffffff;
- font-size: 42px;
- font-weight: 800;
- letter-spacing: -1.2px;
- }
+                        text: "Welcome to ConCup.";
+                        color: #ffffff;
+                        font-size: 42px;
+                        font-weight: 800;
+                        letter-spacing: -1.2px;
+                    }
 
- HorizontalLayout {
- spacing: 4px;
- Text {
- text: \Fork by \;
- color: #888888;
- font-size: 14px;
- font-weight: 400;
- }
- TouchArea {
- width: concat-link.preferred-width;
- mouse-cursor: pointer;
- clicked => { root.link(\concat-github\); }
- concat-link := Text {
- text: \Concat\;
- color: #ffffff;
- font-size: 14px;
- font-weight: 500;
- }
- }
- Text {
- text: " Exercise your freedom before you die.\;
+                    HorizontalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "Fork by ";
+                            color: #888888;
+                            font-size: 14px;
+                            font-weight: 400;
+                        }
+                        TouchArea {
+                            width: concat-link.preferred-width;
+                            mouse-cursor: pointer;
+                            clicked => { root.link("concat-github"); }
+                            concat-link := Text {
+                                text: "Concat";
+                                color: #ffffff;
+                                font-size: 14px;
+                                font-weight: 500;
+                            }
+                        }
+                        Text {
+                            text: ", Exercise your freedom before you die.";
                             color: #888888;
                             font-size: 14px;
                             font-weight: 400;
@@ -1872,7 +1872,7 @@ component WideHome inherits Rectangle {
                                     y: (parent.height - self.height) / 2;
                                 }
                                 new-proj-text := Text {
-                                    text: \New Project\;
+                                    text: "New Project";
                                     color: #000000;
                                     font-size: 13px;
                                     font-weight: 700;
@@ -1907,7 +1907,7 @@ component WideHome inherits Rectangle {
                                     y: (parent.height - self.height) / 2;
                                 }
                                 open-proj-text := Text {
-                                    text: \Open Project\;
+                                    text: "Open Project";
                                     color: #ffffff;
                                     font-size: 13px;
                                     font-weight: 600;
@@ -1942,7 +1942,7 @@ component WideHome inherits Rectangle {
                                     y: (parent.height - self.height) / 2;
                                 }
                                 capcut-proj-text := Text {
-                                    text: \Import from Capcut\;
+                                    text: "Import from Capcut";
                                     color: #ffffff;
                                     font-size: 13px;
                                     font-weight: 600;
@@ -1964,7 +1964,7 @@ component WideHome inherits Rectangle {
                     alignment: center;
                     padding-right: 20px;
                     Image {
-                        source: @image-url(\assets/concup-logo.png\);
+                        source: @image-url("assets/concup-logo.png");
                         width: 160px;
                         height: 160px;
                     }
@@ -1988,7 +1988,7 @@ component WideHome inherits Rectangle {
                         spacing: 14px;
 
                         Text {
-                            text: \Recents\;
+                            text: "Recents";
                             color: #ffffff;
                             font-size: 18px;
                             font-weight: 700;
@@ -1999,15 +1999,15 @@ component WideHome inherits Rectangle {
                             width: 220px;
                             sunken: true;
                             text: root.query;
-                            placeholder: \search your name project\;
+                            placeholder: "search your name project";
                             edited(text) => { root.search-edited(text); }
                         }
 
                         Rectangle { horizontal-stretch: 1; }
 
                         if root.searchable: SortSwitch {
-                            first: I18n.t(\start.sortRecent\);
-                            second: I18n.t(\start.sortName\);
+                            first: I18n.t("start.sortRecent");
+                            second: I18n.t("start.sortName");
                             current: root.sort;
                             changed(index) => { root.sort-changed(index); }
                         }
@@ -2017,7 +2017,7 @@ component WideHome inherits Rectangle {
                     if root.recents-total == 0: EmptyProjects { }
 
                     if root.recents-total > 0 && root.recents.length == 0: Text {
-                        text: I18n.t1(\start.noMatches\, root.query);
+                        text: I18n.t1("start.noMatches", root.query);
                         color: Theme.fg-muted;
                         font-size: Theme.fs-lg;
                         wrap: word-wrap;
