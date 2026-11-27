@@ -1302,7 +1302,7 @@ struct HomeLink {
 // One of the sidebar's verbs: a mark and a word, centred. The primary one
 // is the page's ink turned into a surface, the way the website's one light
 // pill is; the others are a step up from the panel they sit on.
-component SideButton inherits Pressable {
+export component SideButton inherits Pressable {
     in property <Glyph> glyph;
     in property <string> title;
     in property <bool> primary;
@@ -1394,7 +1394,7 @@ component SideLink inherits Pressable {
 }
 
 // A word that goes somewhere: the version line's release notes.
-component TextLink inherits Pressable {
+export component TextLink inherits Pressable {
     in property <string> text;
 
     label: root.text;
@@ -1533,7 +1533,7 @@ component SortSwitch inherits Rectangle {
 // website sets its headline - medium weight, tight tracking - in the
 // page's plain ink. On the wide page it is the projects' heading, the way
 // a music player's "Good evening" is the heading of what you played last.
-component Greeting inherits Text {
+export component Greeting inherits Text {
     in property <bool> returning;
 
     text: root.returning ? I18n.t("start.welcomeBack") : I18n.t("start.welcome");
@@ -1771,6 +1771,8 @@ component WideHome inherits Rectangle {
     in property <string> version;
     in property <bool> can-drop;
     in property <bool> capcut;
+
+    property <bool> searchable: root.recents-total > 0;
 
     callback compose();
     callback open();
