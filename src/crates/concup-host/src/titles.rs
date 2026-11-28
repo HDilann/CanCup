@@ -359,7 +359,10 @@ impl Titles {
                     flip_v: clip.flip_v,
                     blend: {
                         let is_text_invert = clip.text.as_ref().map_or(false, |t| t.invert_color);
-                        if is_text_invert || clip.blend == "invert" {
+                        if is_text_invert
+                            || clip.blend == "invert"
+                            || clip.video_effects.iter().any(|e| e.id.contains("invert"))
+                        {
                             "invert".to_string()
                         } else {
                             clip.blend.clone()

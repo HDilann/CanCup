@@ -2749,7 +2749,7 @@ export component MediaPane inherits Rectangle {
                         // layer: it treats everything heard under it for as
                         // long as it runs. A click still puts it on the
                         // selected clip.
-                        payload-kind: root.audio-shelf ? "audio-filter" : "filter";
+                        payload-kind: root.audio-shelf ? "audio-filter" : "effect";
                         applied(id, label) => {
                             if (root.audio-shelf) {
                                 root.apply-audio(id);

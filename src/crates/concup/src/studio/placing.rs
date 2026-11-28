@@ -34,6 +34,7 @@ impl Studio {
                     }
                     .max(MIN_DURATION),
                     row: 0,
+                    target_clip_id: None,
                 })
             }
             // A title: the preset's id rides where a file's media id would,
@@ -45,6 +46,7 @@ impl Studio {
                 start: 0.0,
                 duration: LAYER_DURATION,
                 row: 0,
+                target_clip_id: None,
             }),
             // A figure from the Stickers page: the shape's name rides
             // where a file's media id would, and the label is what the
@@ -56,6 +58,7 @@ impl Studio {
                 start: 0.0,
                 duration: LAYER_DURATION,
                 row: 0,
+                target_clip_id: None,
             }),
             // A sound from the Audio page: not in the bin yet, so its card
             // rides in `media` behind `sound:`, and the drop imports it.
@@ -68,17 +71,19 @@ impl Studio {
                     start: 0.0,
                     duration: (duration as f32).max(MIN_DURATION),
                     row: 0,
+                    target_clip_id: None,
                 })
             }
-            // A look dragged from the Filters page: a layer over a span.
+            // A look dragged from the Filters or Effects page: a layer over a span.
             // The package id rides in `media`, there being no file.
-            "filter" => Some(DropPlan {
+            "filter" | "effect" => Some(DropPlan {
                 kind: super::layer_kind(Some(id)),
                 label: label.to_owned(),
                 media: id.to_owned(),
                 start: 0.0,
                 duration: LAYER_DURATION,
                 row: 0,
+                target_clip_id: None,
             }),
             // A transition dragged from the Transitions page: a clip of its
             // own over the lanes beneath it (#621), drawn as a layer is. The
@@ -91,6 +96,7 @@ impl Studio {
                 start: 0.0,
                 duration: TRANSITION_DURATION,
                 row: 0,
+                target_clip_id: None,
             }),
             // A sound effect dragged from the Effects page's sound shelf:
             // a sound layer over a span, treating everything heard there.
@@ -102,6 +108,7 @@ impl Studio {
                 start: 0.0,
                 duration: LAYER_DURATION,
                 row: 0,
+                target_clip_id: None,
             }),
             _ => None,
         }
@@ -130,6 +137,30 @@ impl Studio {
         if plan.kind == ClipKind::Adjustment && zone != concup_project::TrackZone::Overlay {
             return None;
         }
+
+        let is_effect = matches!(plan.kind, ClipKind::Filter | ClipKind::Effect);
+        let is_sound_effect = plan.kind == ClipKind::SoundLayer;
+        let sec = f64::from(seconds);
+        let target_clip = self.timeline().clips.iter().find(|clip| {
+            clip.track_id == track.id
+                && sec >= clip.start
+                && sec < clip.start + clip.duration
+        });
+
+        if let Some(target) = target_clip {
+            if is_effect && (super::graded(target.kind) || matches!(target.kind, model::ClipKind::Text | model::ClipKind::Shape)) {
+                plan.target_clip_id = Some(target.id.clone());
+                plan.start = target.start as f32;
+                plan.duration = target.duration as f32;
+                return Some(plan);
+            } else if is_sound_effect && (target.kind == model::ClipKind::Audio || target.kind == model::ClipKind::Video) {
+                plan.target_clip_id = Some(target.id.clone());
+                plan.start = target.start as f32;
+                plan.duration = target.duration as f32;
+                return Some(plan);
+            }
+        }
+
         plan.start = self
             .snapped(seconds.max(0.0), 8.0 * self.lanes.seconds_per_pixel, "")
             .max(0.0);
@@ -163,6 +194,40 @@ impl Studio {
 
     /// Commits a plan that has a lane, and selects what it made.
     pub fn place(&mut self, plan: &DropPlan) {
+        if let Some(target_id) = &plan.target_clip_id {
+            let Some(target) = self.clip(target_id).cloned() else {
+                return;
+            };
+            let is_audio = plan.kind == ClipKind::SoundLayer;
+            let entry = AppliedFilter::new(&plan.media);
+            let patch = if !is_audio {
+                let mut effects = target.video_effects.clone();
+                effects.push(entry);
+                ClipPatch {
+                    video_effects: Some(effects),
+                    ..ClipPatch::default()
+                }
+            } else {
+                let mut filters = target.filters.clone();
+                filters.push(entry);
+                ClipPatch {
+                    filters: Some(filters),
+                    ..ClipPatch::default()
+                }
+            };
+            self.apply(Command::UpdateClip {
+                clip_id: target_id.clone(),
+                patch,
+            });
+            self.selection = vec![target_id.clone()];
+            self.inspector_jump = (
+                self.inspector_jump.0 + 1,
+                if !is_audio { "Effects" } else { "Audio" },
+                if !is_audio { "Effects" } else { "AudioEffects" },
+            );
+            return;
+        }
+
         let Some(track_id) = self.row_track(plan.row).map(|track| track.id.clone()) else {
             return;
         };
@@ -424,7 +489,11 @@ impl Studio {
     /// now being on the timeline to see.
     pub fn place_filter_layer(&mut self, id: &str, label: &str) {
         self.audition = None;
-        self.place_at_playhead(&format!("filter:{id}:{label}"));
+        if !self.edit_targets().is_empty() && id != ADJUST_ID {
+            self.apply_catalogue(id, true);
+        } else {
+            self.place_at_playhead(&format!("filter:{id}:{label}"));
+        }
     }
 
     /// Lays an adjustment layer at the playhead - the colour panel's own

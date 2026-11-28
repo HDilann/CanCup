@@ -729,6 +729,8 @@ pub struct DropPlan {
     pub start: f32,
     pub duration: f32,
     pub row: i32,
+    /// An existing clip under the pointer to integrate the dropped effect into.
+    pub target_clip_id: Option<String>,
 }
 
 /// Every model the window is handed, kept for its lifetime rather than
