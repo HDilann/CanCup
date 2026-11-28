@@ -739,6 +739,7 @@ export component App inherits Window {
             // drag region are all a desk's, and the phone shell's top bar
             // carries the two verbs that are not.
             if !root.phone: TitleBar {
+                width: 100%;
                 macos: root.macos;
                 minimal: root.on-start;
                 deep: root.on-start;

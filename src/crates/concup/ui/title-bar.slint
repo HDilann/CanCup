@@ -180,6 +180,7 @@ export component TitleBar inherits Rectangle {
     callback add-pane(kind: PaneKind);
     callback export-clicked();
 
+    width: 100%;
     height: 32px;
     // The window's ground, not a panel's: the strip is the frame the panes
     // float in, and it reads as one with the gutters between them.
@@ -193,6 +194,8 @@ export component TitleBar inherits Rectangle {
     // control sits above it and takes its own presses; Texts and plain
     // Rectangles are not hit targets, so presses on them fall through here.
     drag := TouchArea {
+        width: 100%;
+        height: 100%;
         pointer-event(event) => {
             if (event.kind == PointerEventKind.down
                 && event.button == PointerEventButton.left) {
@@ -222,8 +225,8 @@ export component TitleBar inherits Rectangle {
     HorizontalLayout {
         x: 0;
         y: 0;
-        width: parent.width;
-        height: parent.height;
+        width: 100%;
+        height: 100%;
         padding-left: root.macos ? 80px : 12px;
         padding-right: 0px;
         spacing: 6px;
@@ -317,6 +320,7 @@ export component TitleBar inherits Rectangle {
         // is why it lives on the window and not in a pane.
         if !root.minimal && !root.covered: VerticalLayout {
             alignment: center;
+            horizontal-stretch: 0;
             AddPaneButton {
                 added(kind) => { root.add-pane(kind); }
             }
@@ -331,6 +335,7 @@ export component TitleBar inherits Rectangle {
         // the theme.
         if !root.minimal && !root.covered: VerticalLayout {
             alignment: center;
+            horizontal-stretch: 0;
             HeaderIconButton {
                 glyph: Glyph.settings;
                 clicked => { root.open-settings(); }
@@ -339,6 +344,7 @@ export component TitleBar inherits Rectangle {
 
         if !root.minimal && !root.covered: VerticalLayout {
             alignment: center;
+            horizontal-stretch: 0;
             padding-left: 4px;
 
             export-button := Rectangle {
@@ -375,10 +381,11 @@ export component TitleBar inherits Rectangle {
 
         // The window's own buttons: macOS-style circular window controls
         // Green (minimize), Orange (fit screen/maximize), Red (close)
-        if root.own-buttons: Rectangle { width: 8px; }
         if root.own-buttons: VerticalLayout {
             alignment: center;
-            padding-right: 12px;
+            horizontal-stretch: 0;
+            padding-left: 10px;
+            padding-right: 14px;
             HorizontalLayout {
                 spacing: 8px;
                 alignment: center;
