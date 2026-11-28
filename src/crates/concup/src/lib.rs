@@ -158,6 +158,7 @@ static STARTING: std::sync::Mutex<Option<concup_log::Op>> = std::sync::Mutex::ne
 
 /// Whether a way out of the run has said so; see [`closing`].
 static CLOSING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static CLOSE_CONFIRMED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 /// Says, once, how this run is ending: `close: by Quit`. The first road
 /// out to say wins and the rest are detail, since one quit passes through
@@ -761,55 +762,24 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
         }
     });
     app.on_titlebar_close(|| {
-        closing("by the window's close button");
         Shell::with(|shell, app| {
-            shell.studio.borrow_mut().save_layout(app.window());
-            let outcome = close_window(
-                || shell.studio.borrow_mut().close_project(),
-                || {
-                    log::debug!("close: project closed, hiding window");
-                    app.window().hide().ok();
-                    slint::quit_event_loop().ok();
-                    log::debug!("close: quit_event_loop called");
-                },
-            );
-            if let Err(error) = outcome {
-                // The save failed and `close_project` left the session
-                // open, so the window stays up. Its notice is published
-                // here or nobody would see it.
-                log::debug!("close: not closing, project could not be saved: {error}");
-                shell.studio.borrow_mut().offer_quit_without_saving(error);
-                shell.studio.borrow_mut().refresh_art();
-                shell.studio.borrow().publish(&app, &shell.models);
-            }
+            shell.studio.borrow_mut().confirm = Some(studio::Confirm::CloseWindow);
+            shell.studio.borrow_mut().refresh_art();
+            shell.studio.borrow().publish(&app, &shell.models);
         });
     });
-    // System-driven close (Alt+F4, taskbar close): the same road out, and
-    // refused the same way when the project cannot be saved.
+    // System-driven close (Alt+F4, taskbar close): asks confirmation
+    // before closing the window.
     app.window().on_close_requested(|| {
-        closing("by the system");
-        let saved = std::cell::Cell::new(true);
-        Shell::with(|shell, app| {
-            shell.studio.borrow_mut().save_layout(app.window());
-            let outcome = close_window(
-                || shell.studio.borrow_mut().close_project(),
-                || {
-                    slint::quit_event_loop().ok();
-                },
-            );
-            if let Err(error) = outcome {
-                saved.set(false);
-                log::debug!("close: not closing, project could not be saved: {error}");
-                shell.studio.borrow_mut().offer_quit_without_saving(error);
-                shell.studio.borrow_mut().refresh_art();
-                shell.studio.borrow().publish(&app, &shell.models);
-            }
-        });
-        if saved.get() {
-            slint::CloseRequestResponse::HideWindow
-        } else {
-            slint::CloseRequestResponse::KeepWindowShown
+        if CLOSE_CONFIRMED.load(std::sync::atomic::Ordering::Relaxed) {
+            return slint::CloseRequestResponse::HideWindow;
         }
+        Shell::with(|shell, app| {
+            shell.studio.borrow_mut().confirm = Some(studio::Confirm::CloseWindow);
+            shell.studio.borrow_mut().refresh_art();
+            shell.studio.borrow().publish(&app, &shell.models);
+        });
+        slint::CloseRequestResponse::KeepWindowShown
     });
     // Maximised or not is read back on every resize rather than tracked:
     // the platform can maximise the window without us - a drag to the top
@@ -2135,9 +2105,37 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
         state.handle(Msg::Project(ProjectMsg::Apply));
     }));
 
-    app.on_confirm_accepted(on_window!(|state| {
-        state.confirm_accepted();
-    }));
+    app.on_confirm_accepted(move || {
+        Shell::with(|shell, app| {
+            let is_close_window = matches!(shell.studio.borrow().confirm, Some(studio::Confirm::CloseWindow));
+            if is_close_window {
+                shell.studio.borrow_mut().confirm = None;
+                CLOSE_CONFIRMED.store(true, std::sync::atomic::Ordering::Relaxed);
+                closing("by confirmed close");
+                shell.studio.borrow_mut().save_layout(app.window());
+                let outcome = close_window(
+                    || shell.studio.borrow_mut().close_project(),
+                    || {
+                        log::debug!("close: project closed, hiding window");
+                        app.window().hide().ok();
+                        slint::quit_event_loop().ok();
+                        log::debug!("close: quit_event_loop called");
+                    },
+                );
+                if let Err(error) = outcome {
+                    CLOSE_CONFIRMED.store(false, std::sync::atomic::Ordering::Relaxed);
+                    log::debug!("close: not closing, project could not be saved: {error}");
+                    shell.studio.borrow_mut().offer_quit_without_saving(error);
+                    shell.studio.borrow_mut().refresh_art();
+                    shell.studio.borrow().publish(&app, &shell.models);
+                }
+            } else {
+                shell.studio.borrow_mut().confirm_accepted();
+                shell.studio.borrow_mut().refresh_art();
+                shell.studio.borrow().publish(&app, &shell.models);
+            }
+        });
+    });
     app.on_confirm_dismissed(on_window!(|state| {
         state.confirm = None;
     }));
@@ -2684,25 +2682,9 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
                     }
                 }
                 if action == "close-window" {
-                    closing("by Close Window");
-                    shell.studio.borrow_mut().save_layout(app.window());
-                    let outcome = close_window(
-                        || shell.studio.borrow_mut().close_project(),
-                        || {
-                            app.window().hide().ok();
-                            slint::quit_event_loop().ok();
-                        },
-                    );
-                    if let Err(error) = outcome {
-                        // Unsaved work is worth more than the window: the
-                        // project stays open and the reason is shown.
-                        log::debug!("close: not closing, project could not be saved: {error}");
-                        shell.studio.borrow_mut().offer_quit_without_saving(error);
-                        shell.studio.borrow_mut().refresh_art();
-                        shell.studio.borrow().publish(&app, &shell.models);
-                        return;
-                    }
-                    log::debug!("close: quit_event_loop called (menu)");
+                    shell.studio.borrow_mut().confirm = Some(studio::Confirm::CloseWindow);
+                    shell.studio.borrow_mut().refresh_art();
+                    shell.studio.borrow().publish(&app, &shell.models);
                     return;
                 }
                 shell.studio.borrow_mut().refresh_art();

@@ -103,6 +103,14 @@ impl Studio {
                 self.release_project();
                 slint::quit_event_loop().ok();
             }
+            Some(Confirm::CloseWindow) => {
+                crate::closing("by confirmed close");
+                if let Err(error) = self.close_project() {
+                    self.offer_quit_without_saving(error);
+                } else {
+                    slint::quit_event_loop().ok();
+                }
+            }
             None => {}
         }
     }
@@ -155,6 +163,15 @@ impl Studio {
                 cancel: t("settings.restartLater").into(),
                 calm: true,
                 glyph: crate::ui::Glyph::Reset,
+            },
+            Confirm::CloseWindow => crate::ui::ConfirmData {
+                open: true,
+                title: t("close.confirmTitle").into(),
+                message: t("close.confirmMessage").into(),
+                action: t("common.yes").into(),
+                cancel: t("common.no").into(),
+                calm: true,
+                glyph: crate::ui::Glyph::Close,
             },
             #[cfg(target_os = "android")]
             Confirm::LastRunClosed => crate::ui::ConfirmData {
